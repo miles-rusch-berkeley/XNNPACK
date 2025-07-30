@@ -4766,8 +4766,11 @@ static void init_qs8_qc8w_gemm_config(void) {
     qs8_qc8w_gemm_config.pack_igemm_goki = (xnn_pack_conv_goki_w_fn) xnn_pack_qs8_conv_goki_w;
     qs8_qc8w_gemm_config.pack_igemm_kgo = (xnn_pack_conv_kgo_w_fn) xnn_pack_qs8_conv_kgo_w;
     qs8_qc8w_gemm_config.pack_deconv_goki = (xnn_pack_deconv_goki_w_fn) xnn_pack_qs8_deconv_goki_w;
-    qs8_qc8w_gemm_config.mr = 4;
-    qs8_qc8w_gemm_config.nr = 4 * hardware_config->vlenb / sizeof(int32_t);
+    int vl = 4 * hardware_config->vlenb / sizeof(int32_t);
+    int ml = hardware_config->vlenb / sizeof(int8_t);
+    qs8_qc8w_gemm_config.mr = ml;
+    qs8_qc8w_gemm_config.nr = vl;
+    qs8_qc8w_gemm_config.minmax.gemm[XNN_MR_TO_INDEX(ml)] = xnn_init_hmp_gemm_ukernel((xnn_gemm_ukernel_fn) xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4vx4v__rvv);
   #else
     qs8_qc8w_gemm_config.minmax.gemm[XNN_MR_TO_INDEX(1)] = xnn_init_hmp_gemm_ukernel((xnn_gemm_ukernel_fn) xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_1x4__scalar_lrintf);
     qs8_qc8w_gemm_config.minmax.gemm[XNN_MR_TO_INDEX(3)] = xnn_init_hmp_gemm_ukernel((xnn_gemm_ukernel_fn) xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_3x4__scalar_lrintf);

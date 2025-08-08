@@ -35,7 +35,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   int8_t* a0 = a;
   int8_t* c0 = c;
   
-  const size_t nr;
+  size_t nr;
   __asm__ volatile("vsetvli %0, zero, e32, m4, ta, ma" : "=r"(nr));
   size_t vl = nr;
 

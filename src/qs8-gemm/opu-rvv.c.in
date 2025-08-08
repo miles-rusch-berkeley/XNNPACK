@@ -48,7 +48,7 @@ void xnn_${DATATYPE_SPEC}_gemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${OUT_
   ${XINT8_T}* a0 = a;
   ${OUT_T}* c0 = c;
   
-  const size_t nr;
+  size_t nr;
   __asm__ volatile("vsetvli %0, zero, e32, ${OUT_LMUL}, ta, ma" : "=r"(nr));
   size_t vl = nr;
 

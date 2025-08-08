@@ -6,7 +6,7 @@
 
 $assert REQUANTIZATION in ["FP32"]
 $assert DATATYPE in ["QC8", "QS8"] 
-$assert MR == 4
+$assert MR == 16
 $assert NR in ["m4", "m8"]
 $OUT_LMUL = NR
 $IN_LMUL = {"m4": "m1", "m8": "m2"}[OUT_LMUL]
@@ -59,7 +59,6 @@ void xnn_${DATATYPE_SPEC}_gemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${OUT_
   const int32_t output_zero_point = params->${PARAMS_STRUCT}.output_zero_point;
   do {
     if XNN_UNLIKELY(nc < nr) {
-      vl = __riscv_vsetvl_e32${OUT_LMUL}(nc);
       __asm__ volatile("vsetvli %0, %1, e32, ${OUT_LMUL}, ta, ma" : "=r"(vl) : "r"(nc));
 
     }
@@ -113,7 +112,7 @@ void xnn_${DATATYPE_SPEC}_gemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${OUT_
       __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
       cm = (${OUT_T}*) ((uintptr_t) cm + cm_stride);
     }
-    c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
-    a0 = (const int8_t*) ((uintptr_t) a0 - kc);
+    c0 = (${OUT_T}*) ((uintptr_t) c0 + cn_stride);
+    a0 = (${XINT8_T}*)  ((uintptr_t) a0 - kc);
   } while (nc != 0);
 }

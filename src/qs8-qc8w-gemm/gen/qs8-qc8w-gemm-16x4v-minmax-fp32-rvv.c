@@ -31,11 +31,11 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-
+  
   int8_t* a0 = a;
   int8_t* c0 = c;
   
-  size_t nr;
+  const size_t nr;
   __asm__ volatile("vsetvli %0, zero, e32, m4, ta, ma" : "=r"(nr));
   size_t vl = nr;
 
@@ -45,21 +45,19 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   do {
     if XNN_UNLIKELY(nc < nr) {
       __asm__ volatile("vsetvli %0, %1, e32, m4, ta, ma" : "=r"(vl) : "r"(nc));
+
     }
     nc = nc - vl;
 
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
-    // for (size_t r = 0; r < mr; r++) {
-    //   VMV_RV(m1, r, v0); // move v0 into row r of m1
-    // }
     OPMVINBCAST(m1, v0); // broadcast channel-wise bias
     w = (const int32_t*) w + nr;
 
     size_t k = 0;
     do {
-      // opacc_e8m1w4(a0, w, a_stride, mr, vl);
+
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(mr));
-      __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"(a0), "r"(a_stride));
+      __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"((uintptr_t) a0), "r"(a_stride));
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
       __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
       VOPACC(m1, v8, v9);
@@ -72,7 +70,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
     __asm__ volatile("vle32.v v4, (%0)" : : "r"((const float*) w));
     w = (const float*) w + nr;
-    
+
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
       //v0 <- vopacc
@@ -80,6 +78,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vfcvt.f.x.v	v0,v0");
       //v0 <- vopacc * vscale
       __asm__ volatile("vfmul.vv	v0,v0,v4");
+      
       //v0 <- minmax
       __asm__ volatile("vfmax.vf	v0,v0,%0" : : "f"((float) output_min_less_zero_point));
       __asm__ volatile("vfmin.vf	v0,v0,%0" : : "f"((float) output_max_less_zero_point));
@@ -90,10 +89,11 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
       __asm__ volatile("vncvt.x.x.w	v0,v0");
-      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(c0));
+      
+      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
       cm = (int8_t*) ((uintptr_t) cm + cm_stride);
     }
     c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
-    a0 = (const int8_t*) ((uintptr_t) a0 - kc);
+    a0 = (int8_t*)  ((uintptr_t) a0 - kc);
   } while (nc != 0);
 }

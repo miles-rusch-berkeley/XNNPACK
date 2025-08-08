@@ -44,10 +44,12 @@ void xnn_${DATATYPE_SPEC}_gemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${OUT_
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-
+  
+  ${XINT8_T}* a0 = a;
   ${OUT_T}* c0 = c;
   
-  const size_t nr = __riscv_vsetvlmax_e32${OUT_LMUL}();
+  const size_t nr;
+  __asm__ volatile("vsetvli %0, zero, e32, ${OUT_LMUL}, ta, ma" : "=r"(nr));
   size_t vl = nr;
 
   $if DATATYPE != "QC8":
@@ -58,51 +60,60 @@ void xnn_${DATATYPE_SPEC}_gemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${OUT_
   do {
     if XNN_UNLIKELY(nc < nr) {
       vl = __riscv_vsetvl_e32${OUT_LMUL}(nc);
+      __asm__ volatile("vsetvli %0, %1, e32, ${OUT_LMUL}, ta, ma" : "=r"(vl) : "r"(nc));
+
     }
     nc = nc - vl;
 
-    // __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
-    register vint32${OUT_LMUL}_t vbias __asm__("v0") =  __riscv_vle32_v_i32${OUT_LMUL}((const int32_t*)w, vl);
-    for (size_t r=0; r<mr; r++) {
-      VMV_RV(m1, r, v0); // move v0 into row r of m1
-    }
+    __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
+    OPMVINBCAST(m1, v0); // broadcast channel-wise bias
     w = (const int32_t*) w + nr;
 
     size_t k = 0;
     do {
-      // asm volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(mr));
-      // asm volatile("vle8.v v0, (%0)" : : "r"(&at[k*M]));
-      register vint8${IN_LMUL}_t va __asm__("v4") = __riscv_vle8_v_i8${IN_LMUL}((const int8_t*) (a + k), mr);
-      // asm volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
-      // asm volatile("vle8.v v8, (%0)" : : "r"(&b[k*N]));
-      register vint8${IN_LMUL}_t vb __asm__("v6") = __riscv_vle8_v_i8${IN_LMUL}((const int8_t*) (w + k), vl);
-      
-      VOPACC(m1, v6, v4);
 
+      __asm__ volatile("vsetvli zero, %0, e8, ${IN_LMUL}, ta, ma" : : "r"(mr));
+      __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"((uintptr_t) a0), "r"(a_stride));
+      __asm__ volatile("vsetvli zero, %0, e8, ${IN_LMUL}, ta, ma" : : "r"(vl));
+      __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
+      VOPACC(m1, v8, v9);
+      a0++;
       w = (const ${XINT8_T}*) w + nr;
       k += sizeof(${XINT8_T});
     } while (k != kc);
  
     $if DATATYPE == "QC8": 
-      const vfloat32${OUT_LMUL}_t vscale = __riscv_vle32_v_f32${OUT_LMUL}((const float*) w, vl);
+      //v4 <- vscale
+      __asm__ volatile("vsetvli zero, %0, e32, ${OUT_LMUL}, ta, ma" : : "r"(vl));
+      __asm__ volatile("vle32.v v4, (%0)" : : "r"((const float*) w));
       w = (const float*) w + nr;
 
+    ${OUT_T}* cm = c0;
     for (size_t r=0; r<mr; r++) {
-      register vint32${OUT_LMUL}_t vacc __asm__ ("v8");
-      VMV_VR(v8, r, m1); // move row r of m1 into v0
-      register vfloat32${OUT_LMUL}_t vfacc = __riscv_vfcvt_f_x_v_f32${OUT_LMUL}(vacc, vl);
+      //v0 <- vopacc
+      VMV_VR(v0, r, m1); // move row r of m1 into v0
+      __asm__ volatile("vfcvt.f.x.v	v0,v0");
       $if DATATYPE == "QC8": 
-        vfacc = __riscv_vfmul_vv_f32${OUT_LMUL}(vfacc, vscale, vl);
+        //v0 <- vopacc * vscale
+        __asm__ volatile("vfmul.vv	v0,v0,v4");
       $else:
-        vfacc = __riscv_vfmul_vf_f32${OUT_LMUL}(vfacc, vscale, vl);
-      vfacc = __riscv_vfmax_vf_f32${OUT_LMUL}(vfacc, output_min_less_zero_point, vl);
-      vfacc = __riscv_vfmin_vf_f32${OUT_LMUL}(vfacc, output_max_less_zero_point, vl);
-      vint16${INTER_LMUL}_t vout = __riscv_vfncvt_x(vfacc, vl);
-      vout = __riscv_vadd_vx_i16${INTER_LMUL}(vout, (int16_t) output_zero_point, vl);
-      vint8${IN_LMUL}_t vout8 = __riscv_vncvt_x_x_w_i8${IN_LMUL}(vout, vl);
-      __riscv_vse8_v_i8${IN_LMUL}(c, vout8, vl);
-      c = (${XINT8_T}*) ((uintptr_t) c + cn_stride);
-      a = (const ${XINT8_T}*) ((uintptr_t) a - kc);
+        __asm__ volatile("vfmul.vf	v0,v0,%0", : : "r"(vscale));
+      
+      //v0 <- minmax
+      __asm__ volatile("vfmax.vf	v0,v0,%0" : : "f"((float) output_min_less_zero_point));
+      __asm__ volatile("vfmin.vf	v0,v0,%0" : : "f"((float) output_max_less_zero_point));
+      
+      __asm__ volatile("vsetvli zero, %0, e16, ${INTER_LMUL}, ta, ma" : : "r"(vl));
+      __asm__ volatile("vfncvt.x.f.w	v0,v0");
+      __asm__ volatile("vadd.vx	v0,v0,%0" : : "r"((int16_t) output_zero_point));
+      
+      __asm__ volatile("vsetvli zero, %0, e8, ${IN_LMUL}, ta, ma" : : "r"(vl));
+      __asm__ volatile("vncvt.x.x.w	v0,v0");
+      
+      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
+      cm = (${OUT_T}*) ((uintptr_t) cm + cm_stride);
     }
+    c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
+    a0 = (const int8_t*) ((uintptr_t) a0 - kc);
   } while (nc != 0);
 }

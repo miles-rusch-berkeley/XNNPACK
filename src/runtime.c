@@ -41,6 +41,12 @@
 #include "xnnpack/subgraph.h"
 #include "pthreadpool.h"
 
+static inline uint64_t read_cycle() {
+    uint64_t cycle;
+    __asm__ volatile("rdcycle %0" : "=r"(cycle));
+    return cycle;
+}
+
 enum xnn_status xnn_reshape_external_value(
     xnn_runtime_t runtime,
     uint32_t external_id,
@@ -1085,11 +1091,13 @@ enum xnn_status xnn_invoke_runtime(
         // Operator was removed after fusion
         continue;
       }
-
+      const uint64_t ts = read_cycle();
       const enum xnn_status status = xnn_run_operator_with_index(runtime->opdata[i].operator_objects[j], i, j, runtime->threadpool);
       if (status != xnn_status_success) {
         return status;
       }
+      const uint64_t tf = read_cycle();
+      printf("Operator[%d, %d]: %s, took %d cycles\n", i,  j, xnn_operator_type_to_string_v2(runtime->opdata[i].operator_objects[j]), tf - ts);
       if (runtime->profiling) {
         runtime->opdata[i].end_ts[j] = xnn_read_timer();
       }

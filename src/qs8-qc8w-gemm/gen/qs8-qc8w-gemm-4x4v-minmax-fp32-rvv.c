@@ -9,7 +9,6 @@
 // LICENSE file in the root directory of this source tree.
 
 #include <assert.h>
-#include <stdio.h>  // For printf.
 
 #include <riscv_vector.h>
 
@@ -32,7 +31,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
   assert(mr <= 4);
   assert(nc != 0);
   assert(kc != 0);
-  printf("gemm_4x4v: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+
   const int8_t* a0 = a;
   int8_t* c0 = c;
   const int8_t* a1 = (const int8_t*) ((uintptr_t) a0 + a_stride);

@@ -1103,7 +1103,6 @@ enum xnn_status xnn_invoke_runtime(
       }
       #ifdef XNN_ARCH_RISCV
       cycle_stamps[i][j] = read_cycle();
-      uint64_t tf = cycle_stamps[i][j];
       #endif
       if (runtime->profiling) {
         runtime->opdata[i].end_ts[j] = xnn_read_timer();
@@ -1120,7 +1119,14 @@ enum xnn_status xnn_invoke_runtime(
         continue;
       }
       uint64_t tf = cycle_stamps[i][j];
-      printf("Runtime = %d cycles for Operator[%d, %d]: %s\n", tf - ts , i,  j, xnn_operator_type_to_string_v2(runtime->opdata[i].operator_objects[j]));
+      char* op_name = xnn_operator_type_to_string_v2(runtime->opdata[i].operator_objects[j]);
+      if (strcmp(op_name, "Fully Connected (NC, QS8)") == 0) {
+        printf("%d cycles; N=%d, K=%d Operator[%d, %d]: %s\n",
+          tf - ts,
+          runtime->opdata[i].operator_objects[j]->group_input_channels,
+          runtime->opdata[i].operator_objects[j]->group_output_channels,
+           i, j, op_name);
+      }
       ts = tf;
     }
   }

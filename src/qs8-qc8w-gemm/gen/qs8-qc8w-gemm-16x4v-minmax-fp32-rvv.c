@@ -50,7 +50,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     nc = nc - vl;
 
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
-    OPMVINBCAST(m1, v0); // broadcast channel-wise bias
+    // OPMVINBCAST(m1, v0); // broadcast channel-wise bias
     w = (const int32_t*) w + nr;
 
     size_t k = 0;
@@ -60,7 +60,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"((uintptr_t) a0), "r"(a_stride));
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
       __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
-      VOPACC(m1, v8, v9);
+      // VOPACC(m1, v8, v9);
       a0++;
       w = (const int8_t*) w + nr;
       k += sizeof(int8_t);
@@ -74,7 +74,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
       //v0 <- vopacc
-      VMV_VR(v0, r, m1); // move row r of m1 into v0
+      // VMV_VR(v0, r, m1); // move row r of m1 into v0
       __asm__ volatile("vfcvt.f.x.v	v0,v0");
       //v0 <- vopacc * vscale
       __asm__ volatile("vfmul.vv	v0,v0,v4");

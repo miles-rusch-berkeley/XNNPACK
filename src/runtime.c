@@ -41,6 +41,14 @@
 #include "xnnpack/subgraph.h"
 #include "pthreadpool.h"
 
+#ifdef XNN_ARCH_RISCV
+static inline uint64_t read_cycle() {
+    uint64_t cycle;
+    __asm__ volatile("rdcycle %0" : "=r"(cycle));
+    return cycle;
+}
+#endif
+
 enum xnn_status xnn_reshape_external_value(
     xnn_runtime_t runtime,
     uint32_t external_id,
@@ -1075,26 +1083,55 @@ enum xnn_status xnn_invoke_runtime(
   enum xnn_status status;
   // if (slinky_evaluate(runtime, &status)) return status;
   #endif
-
+  
   if (runtime->profiling) {
     runtime->start_ts = xnn_read_timer();
   }
+  #ifdef XNN_ARCH_RISCV
+  uint64_t cycle_stamps[runtime->num_ops][XNN_MAX_OPERATOR_OBJECTS];
+  uint64_t cycle_0 = read_cycle();
+  #endif
   for (size_t i = 0; i < runtime->num_ops; i++) {
     for (size_t j = 0; j < XNN_MAX_OPERATOR_OBJECTS; j++) {
       if (runtime->opdata[i].operator_objects[j] == NULL) {
         // Operator was removed after fusion
         continue;
       }
-
       const enum xnn_status status = xnn_run_operator_with_index(runtime->opdata[i].operator_objects[j], i, j, runtime->threadpool);
       if (status != xnn_status_success) {
         return status;
       }
+      #ifdef XNN_ARCH_RISCV
+      cycle_stamps[i][j] = read_cycle();
+      #endif
       if (runtime->profiling) {
         runtime->opdata[i].end_ts[j] = xnn_read_timer();
       }
     }
   }
+  
+  #ifdef XNN_ARCH_RISCV
+  uint64_t ts = cycle_0;
+  for (size_t i = 0; i < runtime->num_ops; i++) {
+    for (size_t j = 0; j < XNN_MAX_OPERATOR_OBJECTS; j++) {
+      if (runtime->opdata[i].operator_objects[j] == NULL) {
+        // Operator was removed after fusion
+        continue;
+      }
+      uint64_t tf = cycle_stamps[i][j];
+      char* op_name = xnn_operator_type_to_string_v2(runtime->opdata[i].operator_objects[j]);
+      if (strcmp(op_name, "Fully Connected (NC, QS8)") == 0) {
+        printf("%d cycles; N=%d, K=%d Operator[%d, %d]: %s\n",
+          tf - ts,
+          runtime->opdata[i].operator_objects[j]->group_input_channels,
+          runtime->opdata[i].operator_objects[j]->group_output_channels,
+           i, j, op_name);
+      }
+      ts = tf;
+    }
+  }
+  printf("Total Runtime = %d cycles\n", ts - cycle_0);
+  #endif
   return xnn_status_success;
 }
 

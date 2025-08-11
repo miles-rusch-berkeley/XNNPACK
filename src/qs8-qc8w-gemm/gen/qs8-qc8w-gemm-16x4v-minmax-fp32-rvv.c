@@ -29,6 +29,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     const union xnn_qs8_qc8w_conv_minmax_params params[restrict XNN_MIN_ELEMENTS(1)])
 {
   assert(mr != 0);
+  assert(mr <= 16);
   assert(nc != 0);
   assert(kc != 0);
   // printf("xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
@@ -51,52 +52,64 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     nc = nc - vl;
 
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
-    OPMVINBCAST(m1, v0); // broadcast channel-wise bias
+    OPMVINBCAST(m0, v0); // broadcast channel-wise bias
     w = (const int32_t*) w + nr;
 
     size_t k = kc;
     __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
     do {
-      // __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"(a0), "r"(a_stride));
-      // a0++;
-      __asm__ volatile("vle8.v v8, (%0)" : : "r"(a0));
+      __asm__ volatile("vle8.v v4, (%0)" : : "r"(a0));
       a0 = (const int8_t*) a0 + a_stride;
-      __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
+      __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
       w = (const int8_t*) w + nr;
-      VOPACC(m1, v8, v9);
-      k -= sizeof(int8_t);
-    } while (k != 0);
- 
+      VOPACC(m0, v4, v5);
+
+      __asm__ volatile("vle8.v v6, (%0)" : : "r"(a0));
+      a0 = (const int8_t*) a0 + a_stride;
+      __asm__ volatile("vle8.v v7, (%0)" : : "r"(w));
+      w = (const int8_t*) w + nr;
+      VOPACC(m0, v6, v7);
+      k -= 2;
+    } while (k >= 2); 
+    if XNN_UNLIKELY(k != 0) {
+      __asm__ volatile("vle8.v v4, (%0)" : : "r"(a0));
+      a0 = (const int8_t*) a0 + a_stride;
+      __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
+      w = (const int8_t*) w + nr;
+      VOPACC(m0, v4, v5);
+    }
+    
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
-    __asm__ volatile("vle32.v v4, (%0)" : : "r"((const float*) w));
+    __asm__ volatile("vle32.v v8, (%0)" : : "r"((const float*) w));
     w = (const float*) w + nr;
 
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
       // printf("      r=%zu\n", r);
-      //v0 <- vopacc
+      //v12 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
-      VMV_VR(v0, r, m1); // move row r of m1 into v0
-      __asm__ volatile("vfcvt.f.x.v	v0,v0");
-      //v0 <- vopacc * vscale
-      __asm__ volatile("vfmul.vv	v0,v0,v4");
+      VMV_VR(v12, r, m0); // move row r of m1 into v12
+      __asm__ volatile("vfcvt.f.x.v	v12,v12");
+      //v12 <- vopacc * vscale
+      __asm__ volatile("vfmul.vv	v12,v12,v8");
       
-      //v0 <- minmax
-      __asm__ volatile("vfmax.vf	v0,v0,%0" : : "f"((float) output_min_less_zero_point));
-      __asm__ volatile("vfmin.vf	v0,v0,%0" : : "f"((float) output_max_less_zero_point));
+      //v12 <- minmax
+      __asm__ volatile("vfmax.vf	v12,v12,%0" : : "f"((float) output_min_less_zero_point));
+      __asm__ volatile("vfmin.vf	v12,v12,%0" : : "f"((float) output_max_less_zero_point));
       
       __asm__ volatile("vsetvli zero, %0, e16, m2, ta, ma" : : "r"(vl));
-      __asm__ volatile("vfncvt.x.f.w	v0,v0");
-      __asm__ volatile("vadd.vx	v0,v0,%0" : : "r"((int16_t) output_zero_point));
+      __asm__ volatile("vfncvt.x.f.w	v12,v12");
+      __asm__ volatile("vadd.vx	v12,v12,%0" : : "r"((int16_t) output_zero_point));
       
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
-      __asm__ volatile("vncvt.x.x.w	v0,v0");
+      __asm__ volatile("vncvt.x.x.w	v12,v12");
       
-      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
-      cm = (int8_t*) ((uintptr_t) cm + cm_stride);
+      // __asm__ volatile("vse8.v	v12, (%0)" : : "r"(cm));
+      __asm__ volatile("vsse8.v v12, (%0), %1" : : "r"(cm), "r"(cm_stride));
+      cm = (int8_t*) ((uintptr_t) cm + cn_stride);
     }
-    c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
-    a0 = (const int8_t*)  ((uintptr_t) a0 - kc);
+    c0 = (int8_t*) ((uintptr_t) c0 + cm_stride);
+    a0 = (const int8_t*)  ((uintptr_t) a0 - kc*a_stride);
   } while (nc != 0);
 }

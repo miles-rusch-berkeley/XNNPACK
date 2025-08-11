@@ -1112,7 +1112,7 @@ enum xnn_status xnn_invoke_runtime(
   
   #ifdef XNN_ARCH_RISCV
   uint64_t ts = cycle_0;
-  printf("Fully Connected (NC, QS8)\ncycles, N, K\n");
+  printf("Fully Connected (NC, QS8)\ncycles, K, N\n");
   for (size_t i = 0; i < runtime->num_ops; i++) {
     for (size_t j = 0; j < XNN_MAX_OPERATOR_OBJECTS; j++) {
       if (runtime->opdata[i].operator_objects[j] == NULL) {

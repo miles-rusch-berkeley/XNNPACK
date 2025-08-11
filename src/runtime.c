@@ -1122,7 +1122,8 @@ enum xnn_status xnn_invoke_runtime(
       uint64_t tf = cycle_stamps[i][j];
       char* op_name = xnn_operator_type_to_string_v2(runtime->opdata[i].operator_objects[j]);
       if (strcmp(op_name, "Fully Connected (NC, QS8)") == 0) {
-        printf("%d,%d,%d",
+        // printf("%s: \n", op_name);
+        printf("%d,%d,%d\n",
           tf - ts,
           runtime->opdata[i].operator_objects[j]->group_input_channels,
           runtime->opdata[i].operator_objects[j]->group_output_channels

@@ -1112,6 +1112,7 @@ enum xnn_status xnn_invoke_runtime(
   
   #ifdef XNN_ARCH_RISCV
   uint64_t ts = cycle_0;
+  printf("Fully Connected (NC, QS8)\ncycles, N, K\n");
   for (size_t i = 0; i < runtime->num_ops; i++) {
     for (size_t j = 0; j < XNN_MAX_OPERATOR_OBJECTS; j++) {
       if (runtime->opdata[i].operator_objects[j] == NULL) {
@@ -1121,16 +1122,16 @@ enum xnn_status xnn_invoke_runtime(
       uint64_t tf = cycle_stamps[i][j];
       char* op_name = xnn_operator_type_to_string_v2(runtime->opdata[i].operator_objects[j]);
       if (strcmp(op_name, "Fully Connected (NC, QS8)") == 0) {
-        printf("%d cycles; N=%d, K=%d Operator[%d, %d]: %s\n",
+        printf("%d,%d,%d",
           tf - ts,
           runtime->opdata[i].operator_objects[j]->group_input_channels,
-          runtime->opdata[i].operator_objects[j]->group_output_channels,
-           i, j, op_name);
+          runtime->opdata[i].operator_objects[j]->group_output_channels
+        );
       }
       ts = tf;
     }
   }
-  printf("Total Runtime = %d cycles\n", ts - cycle_0);
+  printf("Total Runtime = %d\n", ts - cycle_0);
   #endif
   return xnn_status_success;
 }

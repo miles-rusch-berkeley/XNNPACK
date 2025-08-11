@@ -9,7 +9,7 @@
 // LICENSE file in the root directory of this source tree.
 
 #include <assert.h>
-
+#include <stdio.h>
 #include <riscv_vector.h>
 
 #include "xnnpack/bme.h"
@@ -31,7 +31,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-  
+  // printf("xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
   int8_t* a0 = a;
   int8_t* c0 = c;
   
@@ -43,6 +43,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   const int32_t output_max_less_zero_point = (int32_t) params->fp32_scalar.output_max - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_zero_point = params->fp32_scalar.output_zero_point;
   do {
+    // printf("  nc=%zu, vl=%zu\n", nc, vl);
     if XNN_UNLIKELY(nc < nr) {
       __asm__ volatile("vsetvli %0, %1, e32, m4, ta, ma" : "=r"(vl) : "r"(nc));
 
@@ -50,21 +51,26 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     nc = nc - vl;
 
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
-    // OPMVINBCAST(m1, v0); // broadcast channel-wise bias
+    OPMVINBCAST(m1, v0); // broadcast channel-wise bias
     w = (const int32_t*) w + nr;
 
-    size_t k = 0;
+    size_t k = kc;
     do {
-
+      // printf("    k=%zu\n", k);
+      
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(mr));
-      __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"((uintptr_t) a0), "r"(a_stride));
+      __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"(a0), "r"(a_stride));
+      a0++;
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
       __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
-      // VOPACC(m1, v8, v9);
-      a0++;
+      
       w = (const int8_t*) w + nr;
-      k += sizeof(int8_t);
-    } while (k != kc);
+      
+      VOPACC(m1, v8, v9);
+      // __asm__ volatile("vmacc.vv	v0,v8,v9");
+
+      k -= sizeof(int8_t);
+    } while (k != 0);
  
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
@@ -73,8 +79,10 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
+      // printf("      r=%zu\n", r);
       //v0 <- vopacc
-      // VMV_VR(v0, r, m1); // move row r of m1 into v0
+      __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
+      VMV_VR(v0, r, m1); // move row r of m1 into v0
       __asm__ volatile("vfcvt.f.x.v	v0,v0");
       //v0 <- vopacc * vscale
       __asm__ volatile("vfmul.vv	v0,v0,v4");
@@ -94,6 +102,6 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       cm = (int8_t*) ((uintptr_t) cm + cm_stride);
     }
     c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
-    a0 = (int8_t*)  ((uintptr_t) a0 - kc);
+    a0 = (const int8_t*)  ((uintptr_t) a0 - kc);
   } while (nc != 0);
 }

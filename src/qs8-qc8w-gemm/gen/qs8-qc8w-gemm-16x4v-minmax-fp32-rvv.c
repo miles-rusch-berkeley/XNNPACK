@@ -64,7 +64,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
       __asm__ volatile("vle8.v v10, (%0)" : : "r"(am));
       __asm__ volatile("vle8.v v11, (%0)" : : "r"(w));
-      VOPACC(m0, v7, v6);
+      VOPACC(m0, v10, v11);
       am = (const int8_t*) am + a_stride;
       w = (const int8_t*) w + nr;
     }

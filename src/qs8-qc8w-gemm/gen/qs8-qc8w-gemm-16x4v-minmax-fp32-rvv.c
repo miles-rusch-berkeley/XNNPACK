@@ -89,7 +89,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(nr));
     __asm__ volatile("vle32.v v8, (%0)" : : "r"((const float*) w));
-    __asm__ volatile("vle32.v v12, (%0)" : : "r"((const float*) w));
+    __asm__ volatile("vle32.v v12, (%0)" : : "r"((const float*) w2));
     w = (const float*) w2 + nr;
 
     int8_t* cm = c0;
@@ -110,14 +110,14 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vfncvt.x.f.w	v16,v16");
       __asm__ volatile("vadd.vx	v16,v16,%0" : : "r"((int16_t) output_zero_point));
       __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(2*nr));
-      __asm__ volatile("vncvt.x.x.w	v16,v16");
-      //store transpose <- v16
-      __asm__ volatile("vsse8.v v16, (%0), %1" : : "r"(cm), "r"(cm_stride));
-      cm = (int8_t*) ((uintptr_t) cm + cn_stride);
+      __asm__ volatile("vncvt.x.x.w	v16,v16"); 
+
+      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
+      cm = (int8_t*) ((uintptr_t) cm + cm_stride);
     }
-    c0 = (int8_t*) ((uintptr_t) c0 + cm_stride);
+    c0 = (int8_t*) ((uintptr_t) c0 + 2*cn_stride);
     a0 = (const int8_t*)  ((uintptr_t) a0 - kc*a_stride);
-  } 
+  }
 
   __asm__ volatile("vsetvli %0, zero, e32, m4, ta, ma" : "=r"(nr));
   size_t vl = nr;
@@ -180,12 +180,11 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
       __asm__ volatile("vncvt.x.x.w	v12,v12");
-      
-      // __asm__ volatile("vse8.v	v12, (%0)" : : "r"(cm));
-      __asm__ volatile("vsse8.v v12, (%0), %1" : : "r"(cm), "r"(cm_stride));
-      cm = (int8_t*) ((uintptr_t) cm + cn_stride);
+    
+      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
+      cm = (int8_t*) ((uintptr_t) cm + cm_stride);
     }
-    c0 = (int8_t*) ((uintptr_t) c0 + cm_stride);
+    c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
     a0 = (const int8_t*)  ((uintptr_t) a0 - kc*a_stride);
   } while (nc != 0);
 }

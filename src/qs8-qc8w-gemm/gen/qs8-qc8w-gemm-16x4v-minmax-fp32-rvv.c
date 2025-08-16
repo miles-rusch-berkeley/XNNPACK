@@ -97,6 +97,6 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       cm = (int8_t*) ((uintptr_t) cm + cm_stride);
     }
     c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
-    a0 = (const int8_t*)  ((uintptr_t) a0 - kc);
+    a0 = (const int8_t*)  ((uintptr_t) a0 - kc*a_stride);
   } while (nc != 0);
 }

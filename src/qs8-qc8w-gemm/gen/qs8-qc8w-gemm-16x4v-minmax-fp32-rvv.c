@@ -56,17 +56,27 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
     size_t k = kc;
     __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
-    do {
-      // __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"(a0), "r"(a_stride));
-      // a0++;
-      __asm__ volatile("vle8.v v8, (%0)" : : "r"(a0));
+    while (k >= 2) {
+      __asm__ volatile("vle8.v v4, (%0)" : : "r"(a0));
       a0 = (const int8_t*) a0 + a_stride;
-      __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
+      __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
       w = (const int8_t*) w + nr;
-      VOPACC(m1, v8, v9);
-      k -= sizeof(int8_t);
-    } while (k != 0);
- 
+      VOPACC(m0, v4, v5);
+
+      __asm__ volatile("vle8.v v6, (%0)" : : "r"(a0));
+      a0 = (const int8_t*) a0 + a_stride;
+      __asm__ volatile("vle8.v v7, (%0)" : : "r"(w));
+      w = (const int8_t*) w + nr;
+      VOPACC(m0, v6, v7);
+      k -= 2;
+    } 
+    if XNN_UNLIKELY(k != 0) {
+      __asm__ volatile("vle8.v v4, (%0)" : : "r"(a0));
+      a0 = (const int8_t*) a0 + a_stride;
+      __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
+      w = (const int8_t*) w + nr;
+      VOPACC(m0, v4, v5);
+    }
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
     __asm__ volatile("vle32.v v4, (%0)" : : "r"((const float*) w));

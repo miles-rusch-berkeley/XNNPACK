@@ -4769,7 +4769,7 @@ static void init_qs8_qc8w_gemm_config(void) {
     const int vl = 4 * hardware_config->vlenb / sizeof(int32_t);
     const int ml = 4 * hardware_config->vlenb / sizeof(int32_t);
     qs8_qc8w_gemm_config.mr = ml;
-    qs8_qc8w_gemm_config.nr = vl;
+    qs8_qc8w_gemm_config.nr = 2*vl;
     qs8_qc8w_gemm_config.minmax.gemm[XNN_MR_TO_INDEX(ml)] = xnn_init_hmp_gemm_ukernel((xnn_gemm_ukernel_fn) xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv);
     // qs8_qc8w_gemm_config.minmax.gemm[XNN_MR_TO_INDEX(16)] = xnn_init_hmp_gemm_ukernel((xnn_gemm_ukernel_fn) xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv);
   #else

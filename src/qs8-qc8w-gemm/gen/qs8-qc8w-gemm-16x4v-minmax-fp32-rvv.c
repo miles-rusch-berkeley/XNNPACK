@@ -54,34 +54,23 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     w = (const int32_t*) w + nr2;
 
     int8_t* am = a;
-    __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(nr));
     for (int k = 0; k+2 <= kc; k+=2) {
-      __asm__ volatile("vle8.v v8, (%0)" : : "r"(am)); // TODO: add mask for nr/2
-      __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
-      VOPACC(m0, v8, v9);
-      w = (const int8_t*) w + nr;
+      //vl x 2
+      __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(nr2));
+      __asm__ volatile("vle8.v v8, (%0)" : : "r"(w));
+      w = (const int8_t*) w + nr2;
       __asm__ volatile("vle8.v v10, (%0)" : : "r"(w));
-      VOPACC(m1, v8, v10);
+      w = (const int8_t*) w + nr2;
+      //vl x 1
+      __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(nr));
+      __asm__ volatile("vle8.v v12, (%0)" : : "r"(am)); // TODO: add mask for nr/2
       am = (const int8_t*) am + a_stride;
-      w = (const int8_t*) w + nr;
-      // k+1
-      __asm__ volatile("vle8.v v11, (%0)" : : "r"(am));
-      __asm__ volatile("vle8.v v12, (%0)" : : "r"(w));
-      VOPACC(m0, v11, v12);
-      w = (const int8_t*) w + nr;
-      __asm__ volatile("vle8.v v13, (%0)" : : "r"(w));
-      VOPACC(m1, v11, v13);
+      __asm__ volatile("vle8.v v13, (%0)" : : "r"(am));
       am = (const int8_t*) am + a_stride;
-      w = (const int8_t*) w + nr;
-    }
-    if XNN_UNLIKELY((kc%2) != 0) {
-      __asm__ volatile("vle8.v v8, (%0)" : : "r"(am)); // TODO: add mask for nr/2
-      __asm__ volatile("vle8.v v9, (%0)" : : "r"(w));
-      VOPACC(m0, v8, v9);
-      w = (const int8_t*) w + nr;
-      __asm__ volatile("vle8.v v10, (%0)" : : "r"(w));
-      VOPACC(m1, v8, v10);
-      w = (const int8_t*) w + nr;
+      VOPACC(m0, v12, v8);
+      VOPACC(m1, v12, v9);
+      VOPACC(m0, v13, v12);
+      VOPACC(m1, v13, v13);
     }
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(nr2));
@@ -104,11 +93,11 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vfmax.vf	v16,v16,%0" : : "f"((float) output_min_less_zero_point));
       __asm__ volatile("vfmin.vf	v16,v16,%0" : : "f"((float) output_max_less_zero_point));
       
-      __asm__ volatile("vsetvli zero, %0, e16, m4, ta, ma" : : "r"(nr));
+      __asm__ volatile("vsetvli zero, %0, e16, m4, ta, ma" : : "r"(nr2));
       __asm__ volatile("vfncvt.x.f.w	v16,v16");
       __asm__ volatile("vadd.vx	v16,v16,%0" : : "r"((int16_t) output_zero_point));
       
-      __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(nr));
+      __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(nr2));
       __asm__ volatile("vncvt.x.x.w	v16,v16");
       
       __asm__ volatile("vse8.v	v16, (%0)" : : "r"(cm));

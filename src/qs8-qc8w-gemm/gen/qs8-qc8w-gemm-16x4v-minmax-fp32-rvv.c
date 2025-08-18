@@ -29,23 +29,23 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     const union xnn_qs8_qc8w_conv_minmax_params params[restrict XNN_MIN_ELEMENTS(1)])
 {
   assert(mr != 0);
+  assert(mr%2 == 0);
   assert(nc != 0);
   assert(kc != 0);
-  //printf("xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv:\nmr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
-  //printf("  a=%p, a_stride=%zu, w=%p, c=%p, cm_stride=%zu, cn_stride=%zu\n",
-        //  a, a_stride, w, c, cm_stride, cn_stride);
+  assert(kc%2 == 0);
+
   int8_t* c0 = c;
   
   size_t nr;
   __asm__ volatile("vsetvli %0, zero, e32, m4, ta, ma" : "=r"(nr));
   size_t nr2 = 2*nr;
-    //printf("  nr=%zu, nr2=%zu\n", nr, nr2);
+  assert(nc%nr2 == 0);
+
   const int32_t output_min_less_zero_point = (int32_t) params->fp32_scalar.output_min - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_max_less_zero_point = (int32_t) params->fp32_scalar.output_max - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_zero_point = params->fp32_scalar.output_zero_point;
   while (nc >= nr2) {
     nc = nc - 2*nr;
-    //printf("  nc=%zu\n", nc);
     __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(nr2));
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(nr));

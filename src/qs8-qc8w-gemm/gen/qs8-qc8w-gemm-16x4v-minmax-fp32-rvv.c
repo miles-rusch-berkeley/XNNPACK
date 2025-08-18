@@ -78,30 +78,36 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     w = (const float*) w + nr2;
 
     int8_t* cm = c0;
-    for (size_t r=0; r<mr; r++) {
-      // //printf("      r=%zu\n", r);
+    for (size_t r0 = 0; r0 + 2 <= mr; r0 += 2) {
       //v12 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(nr));
-      VMV_VR(v16, r, m0); // move row r of m0 into v16
-      VMV_VR(v20, r, m1); 
+      VMV_VR(v16, r0, m0); // move row r of m0 into v16
+      VMV_VR(v20, r0, m1); 
+      size_t r1 = r0 + 1;
+      VMV_VR(v24, r1, m0); // move row r of m0 into v16
+      VMV_VR(v28, r1, m1); 
       __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(nr2));
       __asm__ volatile("vfcvt.f.x.v	v16,v16");
+      __asm__ volatile("vfcvt.f.x.v	v24,v24");
       //v16 <- vopacc * vscale
       __asm__ volatile("vfmul.vv	v16,v16,v0");
-      
+      __asm__ volatile("vfmul.vv	v24,v24,v0");
       //v16 <- minmax
       __asm__ volatile("vfmax.vf	v16,v16,%0" : : "f"((float) output_min_less_zero_point));
+      __asm__ volatile("vfmax.vf	v24,v24,%0" : : "f"((float) output_min_less_zero_point));
       __asm__ volatile("vfmin.vf	v16,v16,%0" : : "f"((float) output_max_less_zero_point));
-      
+      __asm__ volatile("vfmin.vf	v24,v24,%0" : : "f"((float) output_max_less_zero_point));
       __asm__ volatile("vsetvli zero, %0, e16, m4, ta, ma" : : "r"(nr2));
       __asm__ volatile("vfncvt.x.f.w	v16,v16");
+      __asm__ volatile("vfncvt.x.f.w	v24,v24");
       __asm__ volatile("vadd.vx	v16,v16,%0" : : "r"((int16_t) output_zero_point));
-      
+      __asm__ volatile("vadd.vx	v24,v24,%0" : : "r"((int16_t) output_zero_point));
       __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(nr2));
       __asm__ volatile("vncvt.x.x.w	v16,v16");
-      
+      __asm__ volatile("vncvt.x.x.w	v24,v24");
       __asm__ volatile("vse8.v	v16, (%0)" : : "r"(cm));
-      cm = (int8_t*) ((uintptr_t) cm + cm_stride);
+      __asm__ volatile("vse8.v	v24, (%0)" : : "r"(cm + cm_stride));
+      cm = (int8_t*) ((uintptr_t) cm + 2*cm_stride);
     }
     c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
   }

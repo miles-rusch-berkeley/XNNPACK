@@ -31,21 +31,21 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-  printf("xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv:\nmr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
-  printf("  a=%p, a_stride=%zu, w=%p, c=%p, cm_stride=%zu, cn_stride=%zu\n",
-         a, a_stride, w, c, cm_stride, cn_stride);
+  //printf("xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv:\nmr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  //printf("  a=%p, a_stride=%zu, w=%p, c=%p, cm_stride=%zu, cn_stride=%zu\n",
+        //  a, a_stride, w, c, cm_stride, cn_stride);
   int8_t* c0 = c;
   
   size_t nr;
   __asm__ volatile("vsetvli %0, zero, e32, m4, ta, ma" : "=r"(nr));
   size_t nr2 = 2*nr;
-    printf("  nr=%zu, nr2=%zu\n", nr, nr2);
+    //printf("  nr=%zu, nr2=%zu\n", nr, nr2);
   const int32_t output_min_less_zero_point = (int32_t) params->fp32_scalar.output_min - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_max_less_zero_point = (int32_t) params->fp32_scalar.output_max - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_zero_point = params->fp32_scalar.output_zero_point;
   while (nc >= nr2) {
     nc = nc - 2*nr;
-    printf("  nc=%zu\n", nc);
+    //printf("  nc=%zu\n", nc);
     __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(nr2));
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(nr));
@@ -60,17 +60,17 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vle8.v v8, (%0)" : : "r"(w));
       w = (const int8_t*) w + nr2;
       __asm__ volatile("vle8.v v10, (%0)" : : "r"(w));
-      w = (const int8_t*) w + nr2;
       //vl x 1
       __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(nr));
-      __asm__ volatile("vle8.v v12, (%0)" : : "r"(am)); // TODO: add mask for nr/2
-      am = (const int8_t*) am + a_stride;
-      __asm__ volatile("vle8.v v13, (%0)" : : "r"(am));
+      __asm__ volatile("vle8.v v12, (%0)" : : "r"(am)); 
       am = (const int8_t*) am + a_stride;
       VOPACC(m0, v12, v8);
       VOPACC(m1, v12, v9);
+      __asm__ volatile("vle8.v v13, (%0)" : : "r"(am));
       VOPACC(m0, v13, v12);
       VOPACC(m1, v13, v13);
+      w = (const int8_t*) w + nr2;
+      am = (const int8_t*) am + a_stride;
     }
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(nr2));
@@ -79,7 +79,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
-      // printf("      r=%zu\n", r);
+      // //printf("      r=%zu\n", r);
       //v12 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(nr));
       VMV_VR(v16, r, m0); // move row r of m0 into v16

@@ -31,7 +31,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-  // printf("xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  printf("16x4v uk: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
   int8_t* c0 = c;
   
   size_t nr;

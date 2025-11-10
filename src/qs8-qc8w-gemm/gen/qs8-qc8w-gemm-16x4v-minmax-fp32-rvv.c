@@ -31,7 +31,9 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-  printf("16x4v uk: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  printf("16x4v\n");
+  // printf("w=%p\n", w);
+  // printf("c=%p\n", c);
   int8_t* c0 = c;
   
   size_t nr;
@@ -50,6 +52,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
     OPMVINBCAST(m0, v0); // broadcast channel-wise bias
+    // printf("w + %d; ", ((const int32_t*) w + nr) - (const int32_t*) w);
     w = (const int32_t*) w + nr;
 
     int8_t* am = a;
@@ -58,8 +61,9 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     do {
       __asm__ volatile("vlse8.v v4, (%0), %1" : : "r"(am), "r"(a_stride));
       __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
-      VOPACC(m0, v4, v5);
+      VOPACC(m0, v5, v4);
       am = (const int8_t*) am++;
+      // printf("w + %d; ", ((const int8_t*) w + nr) - (const int8_t*) w);
       w = (const int8_t*) w + nr;
       k -= sizeof(int8_t);
     } while (k != 0);
@@ -67,10 +71,13 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
     __asm__ volatile("vle32.v v8, (%0)" : : "r"((const float*) w));
+    // printf("w + %d; ", ((const float*) w + nr) - (const float*) w);
     w = (const float*) w + nr;
 
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
+      // printf("c(%zu)=%p\n", r, cm);
+
       //v12 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
       VMV_VR(v12, r, m0); // move row r of m1 into v12
@@ -92,6 +99,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vse8.v	v12, (%0)" : : "r"(cm));
       cm = (int8_t*) ((uintptr_t) cm + cm_stride);
     }
+    // printf("c0=%p\n", c0);
     c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
   } while (nc != 0);
 }

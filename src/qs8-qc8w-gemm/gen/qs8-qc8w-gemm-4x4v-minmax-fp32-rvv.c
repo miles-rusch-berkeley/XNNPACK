@@ -31,7 +31,9 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
   assert(mr <= 4);
   assert(nc != 0);
   assert(kc != 0);
-  printf("4x4v uk: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  printf("4x4v\n");
+  // printf("w=%p\n", w);
+  // printf("c=%p\n", c);
   const int8_t* a0 = a;
   int8_t* c0 = c;
   const int8_t* a1 = (const int8_t*) ((uintptr_t) a0 + a_stride);
@@ -69,7 +71,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
     vint32m4_t vacc1 = vacc0;
     vint32m4_t vacc2 = vacc0;
     vint32m4_t vacc3 = vacc0;
- 
+    // printf("w + %d; ", ((const int32_t*) w + nr) - (const int32_t*) w);
     w = (const int32_t*) w + nr;
 
     size_t k = kc;
@@ -82,6 +84,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
       const vint8m1_t vb = __riscv_vle8_v_i8m1((const int8_t*) w, vl);
       const vint32m4_t vb0 = __riscv_vsext_vf4(vb, vl);
 
+      // printf("w + %d; ", ((const int8_t*) w + nr) - (const int8_t*) w);
       w = (const int8_t*) w + nr;
 
       vacc0 = __riscv_vmacc_vx_i32m4(vacc0, va0, vb0, vl);
@@ -102,6 +105,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
     vfacc1 = __riscv_vfmul_vv_f32m4(vfacc1, vscale, vl);
     vfacc2 = __riscv_vfmul_vv_f32m4(vfacc2, vscale, vl);
     vfacc3 = __riscv_vfmul_vv_f32m4(vfacc3, vscale, vl);
+    // printf("w + %d; ", ((const float*) w + nr) - (const float*) w);
     w = (const float*) w + nr;
 
     vfacc0 = __riscv_vfmax_vf_f32m4(vfacc0, output_min_less_zero_point, vl);

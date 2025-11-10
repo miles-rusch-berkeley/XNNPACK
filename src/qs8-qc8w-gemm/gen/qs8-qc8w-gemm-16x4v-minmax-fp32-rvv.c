@@ -42,10 +42,9 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   const int32_t output_max_less_zero_point = (int32_t) params->fp32_scalar.output_max - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_zero_point = params->fp32_scalar.output_zero_point;
   do {
-    // printf("  nc=%zu, vl=%zu\n", nc, vl);
     if XNN_UNLIKELY(nc < nr) {
       __asm__ volatile("vsetvli %0, %1, e32, m4, ta, ma" : "=r"(vl) : "r"(nc));
-
+      
     }
     nc = nc - vl;
 
@@ -55,26 +54,16 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
     int8_t* am = a;
     __asm__ volatile("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
-    for (size_t k = 0; k+2 <= kc; k+=2) {
-      __asm__ volatile("vle8.v v4, (%0)" : : "r"(am));
+    size_t k = kc;
+    do {
+      __asm__ volatile("vlse8.v v4, (%0), %1" : : "r"(am), "r"(a_stride));
       __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
       VOPACC(m0, v4, v5);
-      am = (const int8_t*) am + a_stride;
+      am = (const int8_t*) am++;
       w = (const int8_t*) w + nr;
-
-      __asm__ volatile("vle8.v v6, (%0)" : : "r"(am));
-      __asm__ volatile("vle8.v v7, (%0)" : : "r"(w));
-      VOPACC(m0, v6, v7);
-      am = (const int8_t*) am + a_stride;
-      w = (const int8_t*) w + nr;
-    }
-    // Handle odd k
-    if XNN_UNLIKELY(kc%2 != 0) {
-      __asm__ volatile("vle8.v v4, (%0)" : : "r"(am));
-      __asm__ volatile("vle8.v v5, (%0)" : : "r"(w));
-      VOPACC(m0, v4, v5);
-      w = (const int8_t*) w + nr;
-    }
+      k -= sizeof(int8_t);
+    } while (k != 0);
+    
     //v4 <- vscale
     __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
     __asm__ volatile("vle32.v v8, (%0)" : : "r"((const float*) w));
@@ -82,7 +71,6 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
 
     int8_t* cm = c0;
     for (size_t r=0; r<mr; r++) {
-      // printf("      r=%zu\n", r);
       //v12 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vl));
       VMV_VR(v12, r, m0); // move row r of m1 into v12

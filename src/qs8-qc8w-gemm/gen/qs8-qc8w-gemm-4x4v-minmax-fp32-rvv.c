@@ -32,7 +32,6 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
   assert(nc != 0);
   assert(kc != 0);
   printf("4x4v uk: mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
-
   const int8_t* a0 = a;
   int8_t* c0 = c;
   const int8_t* a1 = (const int8_t*) ((uintptr_t) a0 + a_stride);

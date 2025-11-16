@@ -4766,7 +4766,7 @@ static void init_qs8_qc8w_gemm_config(void) {
     qs8_qc8w_gemm_config.pack_igemm_goki = (xnn_pack_conv_goki_w_fn) xnn_pack_qs8_conv_goki_w;
     qs8_qc8w_gemm_config.pack_igemm_kgo = (xnn_pack_conv_kgo_w_fn) xnn_pack_qs8_conv_kgo_w;
     qs8_qc8w_gemm_config.pack_deconv_goki = (xnn_pack_deconv_goki_w_fn) xnn_pack_qs8_deconv_goki_w;
-    const int vl = 4 * hardware_config->vlenb / sizeof(int32_t);
+    const int vl = 8 * hardware_config->vlenb / sizeof(int32_t);
     const int ml = 4 * hardware_config->vlenb / sizeof(int32_t);
     qs8_qc8w_gemm_config.mr = ml;
     qs8_qc8w_gemm_config.nr = vl;

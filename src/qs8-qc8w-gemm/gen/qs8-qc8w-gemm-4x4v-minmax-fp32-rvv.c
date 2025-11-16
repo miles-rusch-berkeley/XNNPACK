@@ -31,8 +31,9 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
   assert(mr <= 4);
   assert(nc != 0);
   assert(kc != 0);
-  printf("4x4v\n");
-  // printf("w=%p\n", w);
+  printf("4x4v; mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  printf("a_stride=%zu, cm_stride=%zu, cn_stride=%zu\n", a_stride, cm_stride, cn_stride);
+    // printf("w=%p\n", w);
   // printf("c=%p\n", c);
   const int8_t* a0 = a;
   int8_t* c0 = c;

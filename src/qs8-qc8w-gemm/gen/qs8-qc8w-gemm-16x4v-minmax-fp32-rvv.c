@@ -31,8 +31,8 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-  printf("16x4v; mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
-  printf("a_stride=%zu, cm_stride=%zu, cn_stride=%zu\n", a_stride, cm_stride, cn_stride);
+  // printf("16x4v; mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  // printf("a_stride=%zu, cm_stride=%zu, cn_stride=%zu\n", a_stride, cm_stride, cn_stride);
   int8_t* c0 = c;
   
   size_t nr;
@@ -42,7 +42,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
   const int32_t output_max_less_zero_point = (int32_t) params->fp32_scalar.output_max - (int32_t) params->fp32_scalar.output_zero_point;
   const int32_t output_zero_point = params->fp32_scalar.output_zero_point;
   do {
-    printf("nc=%zu, nr=%zu, vl=%zu\n", nc, nr, vl);
+    // printf("nc=%zu, nr=%zu, vl=%zu\n", nc, nr, vl);
     __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(vl));
     __asm__ volatile("vle32.v v0, (%0)" : : "r"((const int32_t*)w));
     OPMVINBCAST(m0, v0); // broadcast channel-wise bias
@@ -79,36 +79,40 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vsetvli %0, %1, e8, m2, ta, ma" : "=r"(vl) : "r"(nc));
     }
     nc = nc - vl;
-    printf("nc=%zu, vl=%zu\n", nc, vl);
+    // printf("nc=%zu, vl=%zu\n", nc, vl);
     //v4 <- vscale
     __asm__ volatile("vle32.v v24, (%0)" : : "r"((const float*) w));
-    // printf("w + %d; ", ((const float*) w + nr) - (const float*) w);
     w = (const float*) w + nr;
     
     int8_t* cm = c0;
-    for (size_t r=0; r<mr; r++) {
-      // printf("c(%zu)=%p\n", r, cm);
-
+    for (size_t r=0; r+1<=mr; r+=2) {
       //v0 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(vl));
       VMV_VR(v0, r, m0); // move row r of m1 into v0
+      VMV_VR(v8, r+1, m0); // move row r+1 of m1 into v1
       __asm__ volatile("vfcvt.f.x.v	v0,v0");
+      __asm__ volatile("vfcvt.f.x.v	v8,v8");
       //v0 <- vopacc * vscale
       __asm__ volatile("vfmul.vv	v0,v0,v24");
-      
+      __asm__ volatile("vfmul.vv	v8,v8,v24");
       //v0 <- minmax
       __asm__ volatile("vfmax.vf	v0,v0,%0" : : "f"((float) output_min_less_zero_point));
       __asm__ volatile("vfmin.vf	v0,v0,%0" : : "f"((float) output_max_less_zero_point));
-      
+      __asm__ volatile("vfmax.vf	v8,v8,%0" : : "f"((float) output_min_less_zero_point));
+      __asm__ volatile("vfmin.vf	v8,v8,%0" : : "f"((float) output_max_less_zero_point));
+
       __asm__ volatile("vsetvli zero, %0, e16, m4, ta, ma" : : "r"(vl));
       __asm__ volatile("vfncvt.x.f.w	v0,v0");
       __asm__ volatile("vadd.vx	v0,v0,%0" : : "r"((int16_t) output_zero_point));
-      
+      __asm__ volatile("vfncvt.x.f.w	v8,v8");
+      __asm__ volatile("vadd.vx	v8,v8,%0" : : "r"((int16_t) output_zero_point));
+
       __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(vl));
       __asm__ volatile("vncvt.x.x.w	v0,v0");
-      
+      __asm__ volatile("vncvt.x.x.w	v8,v8");
       __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
-      cm = (int8_t*) ((uintptr_t) cm + cm_stride);
+      __asm__ volatile("vse8.v	v8, (%0)" : : "r"(cm+cm_stride));
+      cm = (int8_t*) ((uintptr_t) cm + 2*cm_stride);
     }
     // printf("c0=%p\n", c0);
     c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);

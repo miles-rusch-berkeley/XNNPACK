@@ -52,17 +52,19 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     size_t k = kc;
     
     do {
-      __asm__ volatile("vlse8.v v4, (%0), %1" : : "r"(am), "r"(a_stride));
+      // __asm__ volatile("vlse8.v v4, (%0), %1" : : "r"(am), "r"(a_stride));
+      __asm__ volatile("vle8.v v4, (%0)" : : "r"(am));
       __asm__ volatile("vle8.v v6, (%0)" : : "r"(w));
       VOPACC(m0, v6, v4);
-      am = (int8_t*) ((uintptr_t) am + 1);
+      am = (int8_t*) ((uintptr_t) am + a_stride);
       w = (const int8_t*) w + nr;
       k -= sizeof(int8_t);
 
-      __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"(am), "r"(a_stride));
+      // __asm__ volatile("vlse8.v v8, (%0), %1" : : "r"(am), "r"(a_stride));
+      __asm__ volatile("vle8.v v8, (%0)" : : "r"(am));
       __asm__ volatile("vle8.v v10, (%0)" : : "r"(w));
       VOPACC(m0, v10, v8);
-      am = (int8_t*) ((uintptr_t) am + 1);
+      am = (int8_t*) ((uintptr_t) am + a_stride);
       w = (const int8_t*) w + nr;
       k -= sizeof(int8_t);
     } while (k != 0);

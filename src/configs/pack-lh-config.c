@@ -80,6 +80,34 @@ static void init_x8_pack_lh_config(void) {
       }
     #endif  // XNN_ENABLE_ARM_SME2
 #endif  // XNN_ARCH_ARM64 && XNN_ENABLE_KLEIDIAI
+#if XNN_ARCH_RISCV && XNN_ENABLE_RISCV_VECTOR
+  const struct xnn_hardware_config* hardware_config = xnn_init_hardware_config();
+  assert(hardware_config != NULL);
+  if (hardware_config->use_riscv_vector) {
+    // if (hardware_config->vlenb == 64) {
+    //   x8_pack_lh_config.ukernel = (xnn_pack_lh_ukernel_fn) xnn_x8_pack_lh_ukernel__64x8_rvv;
+    //   x8_pack_lh_config.size_fn = (xnn_pack_lh_size_fn) xnn_x8_pack_lh_size__64x8_rvv;
+    //   x8_pack_lh_config.offset_fn = (xnn_pack_lh_offset_fn) xnn_x8_pack_lh_offset__64x8_rvv;
+    // }
+    // if (hardware_config->vlenb == 32) {
+    //   x8_pack_lh_config.ukernel = (xnn_pack_lh_ukernel_fn) xnn_x8_pack_lh_ukernel__32x8_rvv;
+    //   x8_pack_lh_config.size_fn = (xnn_pack_lh_size_fn) xnn_x8_pack_lh_size__32x8_rvv;
+    //   x8_pack_lh_config.offset_fn = (xnn_pack_lh_offset_fn) xnn_x8_pack_lh_offset__32x8_rvv;
+    // } 
+    // if (hardware_config->vlenb == 16) {
+      x8_pack_lh_config.ukernel = (xnn_pack_lh_ukernel_fn) xnn_x8_pack_lh_ukernel__16x8_rvv;
+      x8_pack_lh_config.size_fn = (xnn_pack_lh_size_fn) xnn_x8_pack_lh_size__16x8_rvv;
+      x8_pack_lh_config.offset_fn = (xnn_pack_lh_offset_fn) xnn_x8_pack_lh_offset__16x8_rvv;
+    // } 
+    // else {
+    //   //TODO: Add scalar kernel
+    //   x8_pack_lh_config.ukernel = (xnn_pack_lh_ukernel_fn) xnn_x8_pack_lh_ukernel__scalar;
+    //   x8_pack_lh_config.size_fn = (xnn_pack_lh_size_fn) xnn_x8_pack_lh_size__scalar;
+    //   x8_pack_lh_config.offset_fn = (xnn_pack_lh_offset_fn) xnn_x8_pack_lh_offset__scalar;
+    // }
+  }
+  
+#endif  // XNN_ARCH_RISCV && XNN_ENABLE_RISCV_VECTOR
 }
 
 const struct xnn_pack_lh_config* xnn_init_x8_pack_lh_config() {

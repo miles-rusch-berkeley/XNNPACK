@@ -243,6 +243,9 @@ DECLARE_PF32_GEMM_MINMAX_UKERNEL_FUNCTION(
 DECLARE_PQS8_QC8W_GEMM_MINMAX_UKERNEL_FUNCTION(
     xnn_pqs8_qc8w_gemm_minmax_ukernel_32x32__neonsme2)
 
+DECLARE_PQS8_QC8W_GEMM_MINMAX_UKERNEL_FUNCTION(
+    xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv)
+
 #define DECLARE_F32_GEMM_MINMAX_UKERNEL_FUNCTION(fn_name) \
   XNN_INTERNAL void fn_name(                              \
       size_t mr,                                          \

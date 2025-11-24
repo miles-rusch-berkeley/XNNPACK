@@ -76,7 +76,8 @@ SET(PROD_RVV_MICROKERNEL_SRCS
   src/x32-transposec/gen/x32-transposec-4x4-rvv.c
   src/x32-transposec/gen/x32-transposec-8x8-rvv.c
   src/x32-transposec/gen/x32-transposec-16x8-rvv.c
-  src/x32-transposec/gen/x32-transposec-32x8-rvv.c)
+  src/x32-transposec/gen/x32-transposec-32x8-rvv.c
+  src/x8-pack-lh/x8--packlh-rvv.c)
 
 SET(NON_PROD_RVV_MICROKERNEL_SRCS
   src/f32-gemm/gen/f32-gemm-1x4v-relu-rvv.c

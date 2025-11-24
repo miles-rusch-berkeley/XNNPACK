@@ -23,6 +23,11 @@ XNN_UKERNEL(xnn_arch_arm_sme, xnn_x8_pack_lh_ukernel__neonsme2,
             xnn_x8_pack_lh_size__neonsme2, xnn_x8_pack_lh_offset__neonsme2)
 #endif  // XNN_ENABLE_KLEIDIAI
 
+#if XNN_ARCH_RISCV && XNN_ENABLE_RISCV_VECTOR
+XNN_UKERNEL(xnn_arch_riscv_vector, xnn_x8_pack_lh_ukernel__16x8_rvv,
+            xnn_x8_pack_lh_size__16x8_rvv, xnn_x8_pack_lh_offset__16x8_rvv)
+#endif  // XNN_ARCH_RISCV && XNN_ENABLE_RISCV_VECTOR
+
 #ifdef XNN_DEFINED_UKERNEL_WITH_PARAMS
 #undef XNN_DEFINED_UKERNEL_WITH_PARAMS
 #undef XNN_UKERNEL_WITH_PARAMS

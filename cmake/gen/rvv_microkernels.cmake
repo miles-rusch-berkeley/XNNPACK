@@ -55,6 +55,7 @@ SET(PROD_RVV_MICROKERNEL_SRCS
   src/qs8-qc8w-gemm/gen/qs8-qc8w-gemm-1x4v-minmax-fp32-rvv.c
   src/qs8-qc8w-gemm/gen/qs8-qc8w-gemm-4x4v-minmax-fp32-rvv.c
   src/qs8-qc8w-gemm/gen/qs8-qc8w-gemm-16x4v-minmax-fp32-rvv.c
+  src/pqs8-qc8w-gemm/pqs8-qc8w-gemm-16x4v-minmax-rvv.c
   src/qs8-qc8w-igemm/gen/qs8-qc8w-igemm-1x4v-minmax-fp32-rvv.c
   src/qs8-qc8w-igemm/gen/qs8-qc8w-igemm-4x4v-minmax-fp32-rvv.c
   src/qs8-vadd/gen/qs8-vadd-minmax-rvv-u2v.c

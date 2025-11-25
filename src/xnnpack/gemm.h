@@ -235,8 +235,8 @@ DECLARE_PF32_GEMM_MINMAX_UKERNEL_FUNCTION(
   XNN_INTERNAL size_t fn_name##_get_nr();                                     \
                                                                               \
   XNN_INTERNAL void fn_name(size_t mr, size_t nc, size_t kc, const int8_t* a, \
-                            const void* w, int8_t* c, size_t cm_stride,       \
-                            size_t cn_stride,                                 \
+                            size_t a_stride, const void* w, int8_t* c,        \
+                            size_t cm_stride, size_t cn_stride,               \
                             const union xnn_qs8_qc8w_conv_minmax_params       \
                                 params[XNN_RESTRICT XNN_MIN_ELEMENTS(1)]);
 

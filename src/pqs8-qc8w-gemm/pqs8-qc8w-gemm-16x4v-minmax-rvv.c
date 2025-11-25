@@ -16,6 +16,14 @@
 #include "xnnpack/gemm.h"
 #include "xnnpack/math.h"
 
+size_t xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv_get_mr() {
+  return 16;
+}
+
+size_t xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv_get_nr() {
+  // TODO return vsetvlmax_e32m8()
+  return 32;
+}
 void xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv(
     size_t mr,
     size_t nc,
@@ -31,7 +39,7 @@ void xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv(
   assert(mr != 0);
   assert(nc != 0);
   assert(kc != 0);
-  // printf("16x4v; mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
+  printf("pqs8 16x4v; mr=%zu, nc=%zu, kc=%zu\n", mr, nc, kc);
   // printf("a_stride=%zu, cm_stride=%zu, cn_stride=%zu\n", a_stride, cm_stride, cn_stride);
   int8_t* c0 = c;
   

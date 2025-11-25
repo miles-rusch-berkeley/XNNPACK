@@ -362,10 +362,10 @@ static void init_pqs8_qc8w_gemm_config(void) {
       xnn_init_hardware_config();
   assert(hardware_config != NULL);
   if (hardware_config->use_riscv_vector) {
-    const int vl = 8 * hardware_config->vlenb / sizeof(int32_t);
-    const int mr = 4 * hardware_config->vlenb / sizeof(int32_t);
+    const int nr = xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv_get_nr();
+    const int mr = xnn_pqs8_qc8w_gemm_minmax_ukernel_16x4v__rvv_get_mr();
     pqs8_qc8w_gemm_config.mr = mr;
-    pqs8_qc8w_gemm_config.nr = vl;
+    pqs8_qc8w_gemm_config.nr = nr;
     pqs8_qc8w_gemm_config.minmax.gemm[XNN_MR_TO_INDEX(mr)] =
       xnn_init_hmp_gemm_ukernel(
         (xnn_gemm_ukernel_fn) 

@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "xnnpack/common.h"
 #include "xnnpack/hardware-config.h"
@@ -373,7 +374,7 @@ void xnn_x8_pack_lh_ukernel__16x8_rvv(size_t m, size_t k, size_t mr_packed,
     
     const int8_t* input = lhs + m_idx_start * lhs_stride;
     int8_t* output = (int8_t*) lhs_packed;
-    
+    printf("pack_lh: m=%zu, k=%zu, mr_packed=%zu, kr=%zu, sr=%zu, m_idx_start=%zu\n", m, k, mr_packed, kr, sr, m_idx_start);
     // Call transpose kernel: transpose k columns x m_actual rows
     xnn_x8_transpose_ukernel__16x8_rvv(
       (const uint8_t*) input,  // input

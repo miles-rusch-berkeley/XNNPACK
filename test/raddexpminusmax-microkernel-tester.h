@@ -3,7 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#pragma once
+#ifndef XNNPACK_TEST_RADDEXPMINUSMAX_MICROKERNEL_TESTER_H_
+#define XNNPACK_TEST_RADDEXPMINUSMAX_MICROKERNEL_TESTER_H_
 
 #include <algorithm>
 #include <cassert>
@@ -15,10 +16,10 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include "xnnpack.h"
-#include "xnnpack/microfnptr.h"
-#include "xnnpack/buffer.h"
-#include "replicable_random_device.h"
+#include "include/xnnpack.h"
+#include "src/xnnpack/buffer.h"
+#include "src/xnnpack/microfnptr.h"
+#include "test/replicable_random_device.h"
 
 class RAddExpMinusMaxMicrokernelTester {
  public:
@@ -28,28 +29,25 @@ class RAddExpMinusMaxMicrokernelTester {
     return *this;
   }
 
-  size_t elements() const {
-    return this->elements_;
-  }
+  size_t elements() const { return this->elements_; }
 
   RAddExpMinusMaxMicrokernelTester& iterations(size_t iterations) {
     this->iterations_ = iterations;
     return *this;
   }
 
-  size_t iterations() const {
-    return this->iterations_;
-  }
+  size_t iterations() const { return this->iterations_; }
 
   void Test(xnn_f32_raddexpminusmax_ukernel_fn raddexpminusmax) const {
     xnnpack::ReplicableRandomDevice rng;
-    // Choose such range that expf(x[i]) overflows, but expf(x[i] - x_max) doesn't.
-    // However, the range is still narrow enough that single-precision exp doesn't overflow.
+    // Choose such range that expf(x[i]) overflows, but expf(x[i] - x_max)
+    // doesn't. However, the range is still narrow enough that single-precision
+    // exp doesn't overflow.
     auto f32rng = [&rng]() {
       return std::uniform_real_distribution<float>(90.0f, 100.0f)(rng);
     };
 
-    xnnpack::Buffer<float> x(elements() + XNN_EXTRA_BYTES / sizeof(float));
+    xnnpack::Buffer<float> x(elements(), xnnpack::XnnExtraBytes);
     for (size_t iteration = 0; iteration < iterations(); iteration++) {
       std::generate(x.begin(), x.end(), std::ref(f32rng));
 
@@ -66,7 +64,7 @@ class RAddExpMinusMaxMicrokernelTester {
 
       // Verify results.
       ASSERT_NEAR(sum_ref, double(sum), std::abs(sum_ref) * 1.0e-6)
-        << "elements = " << elements() << ", x_max = " << x_max;
+          << "elements = " << elements() << ", x_max = " << x_max;
     }
   }
 
@@ -74,3 +72,5 @@ class RAddExpMinusMaxMicrokernelTester {
   size_t elements_{1};
   size_t iterations_{15};
 };
+
+#endif  // XNNPACK_TEST_RADDEXPMINUSMAX_MICROKERNEL_TESTER_H_

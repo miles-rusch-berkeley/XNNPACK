@@ -1,3 +1,4 @@
+// clang-format off
 // Auto-generated file. Do not edit!
 //   Template: src/qs8-gemm/rvv.c.in
 //   Generator: tools/xngen
@@ -12,8 +13,8 @@
 #include <stdio.h>
 #include <riscv_vector.h>
 
-#include "xnnpack/gemm.h"
-#include "xnnpack/math.h"
+#include "src/xnnpack/gemm.h"
+#include "src/xnnpack/math.h"
 
 void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
     size_t mr,
@@ -25,7 +26,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
     int8_t* restrict c,
     size_t cm_stride,
     size_t cn_stride,
-    const union xnn_qs8_qc8w_conv_minmax_params params[restrict XNN_MIN_ELEMENTS(1)])
+    const union xnn_qs8_qc8w_conv_minmax_params* restrict params)
 {
   assert(mr != 0);
   assert(mr <= 4);
@@ -72,7 +73,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
     vint32m4_t vacc1 = vacc0;
     vint32m4_t vacc2 = vacc0;
     vint32m4_t vacc3 = vacc0;
-    // printf("w + %d; ", ((const int32_t*) w + nr) - (const int32_t*) w);
+
     w = (const int32_t*) w + nr;
 
     size_t k = kc;
@@ -83,19 +84,19 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_4x4v__rvv(
       const int32_t va3 = (int32_t) *a3++;
 
       const vint8m1_t vb = __riscv_vle8_v_i8m1((const int8_t*) w, vl);
-      const vint32m4_t vb0 = __riscv_vsext_vf4(vb, vl);
+      const vint16m2_t vb0 = __riscv_vsext_vf2(vb, vl);
 
       // printf("w + %d; ", ((const int8_t*) w + nr) - (const int8_t*) w);
       w = (const int8_t*) w + nr;
 
-      vacc0 = __riscv_vmacc_vx_i32m4(vacc0, va0, vb0, vl);
-      vacc1 = __riscv_vmacc_vx_i32m4(vacc1, va1, vb0, vl);
-      vacc2 = __riscv_vmacc_vx_i32m4(vacc2, va2, vb0, vl);
-      vacc3 = __riscv_vmacc_vx_i32m4(vacc3, va3, vb0, vl);
+      vacc0 = __riscv_vwmacc_vx_i32m4(vacc0, va0, vb0, vl);
+      vacc1 = __riscv_vwmacc_vx_i32m4(vacc1, va1, vb0, vl);
+      vacc2 = __riscv_vwmacc_vx_i32m4(vacc2, va2, vb0, vl);
+      vacc3 = __riscv_vwmacc_vx_i32m4(vacc3, va3, vb0, vl);
 
       k -= sizeof(int8_t);
     } while (k != 0);
- 
+
     vfloat32m4_t vfacc0 = __riscv_vfcvt_f_x_v_f32m4(vacc0, vl);
     vfloat32m4_t vfacc1 = __riscv_vfcvt_f_x_v_f32m4(vacc1, vl);
     vfloat32m4_t vfacc2 = __riscv_vfcvt_f_x_v_f32m4(vacc2, vl);

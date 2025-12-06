@@ -1,3 +1,4 @@
+// clang-format off
 // Auto-generated file. Do not edit!
 //   Template: src/f32-maxpool/maxpool.c.in
 //   Generator: tools/xngen
@@ -19,10 +20,10 @@
 #define xnn_load_tail_safe_impl(x, c) xnn_load_tail_safe_f32(x, c)
 #define xnn_pre_store_impl(x) x
 
-#include "xnnpack/simd/f32-wasmsimd.h"
-
-#include "xnnpack/common.h"
-#include "xnnpack/microparams.h"
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/math.h"
+#include "src/xnnpack/microparams.h"
+#include "src/xnnpack/simd/f32-wasmsimd.h"
 
 void xnn_f32_maxpool_minmax_ukernel_9p__wasmsimd_u4(
     size_t output_pixels,
@@ -30,10 +31,11 @@ void xnn_f32_maxpool_minmax_ukernel_9p__wasmsimd_u4(
     size_t channels,
     const float** input,
     size_t input_offset,
+    size_t input_pixel_stride,
     float* output,
     size_t input_increment,
     size_t output_increment,
-    const struct xnn_f32_minmax_params params[restrict XNN_MIN_ELEMENTS(1)])
+    const struct xnn_f32_minmax_params* restrict params)
 {
   assert(output_pixels != 0);
   assert(channels != 0);
@@ -208,6 +210,7 @@ void xnn_f32_maxpool_minmax_ukernel_9p__wasmsimd_u4(
     }
 
     input = (const float**) ((uintptr_t) input + input_increment);
+    input_offset += input_pixel_stride;
     output = (float*) ((uintptr_t) output + output_increment);
   } while (--output_pixels != 0);
 }

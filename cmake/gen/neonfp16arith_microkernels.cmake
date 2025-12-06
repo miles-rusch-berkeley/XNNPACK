@@ -21,14 +21,14 @@ SET(PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-dwconv2d-chw/gen/f16-dwconv2d-chw-3x3s2p1-minmax-neonfp16arith-1x8.c
   src/f16-dwconv2d-chw/gen/f16-dwconv2d-chw-5x5p2-minmax-neonfp16arith-1x8.c
   src/f16-dwconv2d-chw/gen/f16-dwconv2d-chw-5x5s2p2-minmax-neonfp16arith-1x8.c
-  src/f16-f32acc-rdsum/gen/f16-f32acc-rdsum-7p7x-minmax-neonfp16arith-c16.c
+  src/f16-f32acc-rdsum/gen/f16-f32acc-rdsum-7p7x-minmax-neonfp16arith-u16.c
   src/f16-f32acc-rsum/gen/f16-f32acc-rsum-neonfp16arith-u32-acc4.c
   src/f16-gemm/gen/f16-gemm-1x8-minmax-neonfp16arith-ld64.c
   src/f16-gemm/gen/f16-gemm-1x16-minmax-neonfp16arith-ld64.c
   src/f16-gemm/gen/f16-gemm-6x8-minmax-neonfp16arith-ld64.c
   src/f16-gemm/gen/f16-gemm-6x16-minmax-neonfp16arith-ld64.c
   src/f16-ibilinear-chw/gen/f16-ibilinear-chw-neonfp16arith-p8.c
-  src/f16-ibilinear/gen/f16-ibilinear-neonfp16arith-c8.c
+  src/f16-ibilinear/gen/f16-ibilinear-neonfp16arith-u8.c
   src/f16-igemm/gen/f16-igemm-1x8-minmax-neonfp16arith-ld64.c
   src/f16-igemm/gen/f16-igemm-1x16-minmax-neonfp16arith-ld64.c
   src/f16-igemm/gen/f16-igemm-6x8-minmax-neonfp16arith-ld64.c
@@ -36,7 +36,10 @@ SET(PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-maxpool/gen/f16-maxpool-9p-minmax-neonfp16arith-u8.c
   src/f16-qs8-vcvt/gen/f16-qs8-vcvt-neonfp16arith-u32.c
   src/f16-raddstoreexpminusmax/gen/f16-raddstoreexpminusmax-neonfp16arith-rr2-p2-u32.c
+  src/f16-rdminmax/gen/f16-rdmax-2p2x-neonfp16arith-c32.c
+  src/f16-rdminmax/gen/f16-rdmin-2p2x-neonfp16arith-c32.c
   src/f16-rminmax/gen/f16-rmax-neonfp16arith-u32-acc4.c
+  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u32-acc4.c
   src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u32-acc4.c
   src/f16-spmm/gen/f16-spmm-32x1-minmax-neonfp16arith-pipelined.c
   src/f16-vapproxgelu/gen/f16-vapproxgelu-neonfp16arith-rational-6-4-div.c
@@ -58,7 +61,9 @@ SET(PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-vbinary/gen/f16-vsubc-neonfp16arith-u16.c
   src/f16-vclamp/gen/f16-vclamp-neonfp16arith-u16.c
   src/f16-vcmul/gen/f16-vcmul-neonfp16arith-u16.c
+  src/f16-vcos/gen/f16-vcos-neonfp16arith-rational-3-2-div.c
   src/f16-velu/gen/f16-velu-neonfp16arith-rr1-p3-u16.c
+  src/f16-vexp/gen/f16-vexp-neonfp16arith-poly-3.c
   src/f16-vgelu/gen/f16-vgelu-neonfp16arith-rational-6-4-div.c
   src/f16-vhswish/gen/f16-vhswish-neonfp16arith-u16.c
   src/f16-vlrelu/gen/f16-vlrelu-neonfp16arith-u16.c
@@ -70,6 +75,7 @@ SET(PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-vrsqrt/gen/f16-vrsqrt-neonfp16arith-rsqrt-u16.c
   src/f16-vsigmoid/gen/f16-vsigmoid-neonfp16arith-rr2-p2-nr1fma-u32.c
   src/f16-vsigmoid/gen/f16-vsigmoid-neonfp16arith-rr2-p2-nr1recps-u16.c
+  src/f16-vsin/gen/f16-vsin-neonfp16arith-rational-3-2-div.c
   src/f16-vsqrt/gen/f16-vsqrt-neonfp16arith-nr1fma1adj-u8.c
   src/f16-vtanh/gen/f16-vtanh-neonfp16arith-expm1minus-rr1-p3h2ts-nr1fma-u32.c
   src/f16-vunary/gen/f16-vabs-neonfp16arith-u16.c
@@ -142,9 +148,8 @@ SET(NON_PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-dwconv2d-chw/gen/f16-dwconv2d-chw-5x5s2p2-minmax-neonfp16arith-2x8.c
   src/f16-dwconv2d-chw/gen/f16-dwconv2d-chw-5x5s2p2-minmax-neonfp16arith-3x8-acc2.c
   src/f16-dwconv2d-chw/gen/f16-dwconv2d-chw-5x5s2p2-minmax-neonfp16arith-3x8.c
-  src/f16-f32acc-rdsum/gen/f16-f32acc-rdsum-7p7x-minmax-neonfp16arith-c32.c
-  src/f16-f32acc-rdsum/gen/f16-f32acc-rdsum-7p7x-minmax-neonfp16arith-c64.c
-  src/f16-f32acc-rsum/gen/f16-f32acc-rsum-neonfp16arith-u4.c
+  src/f16-f32acc-rdsum/gen/f16-f32acc-rdsum-7p7x-minmax-neonfp16arith-u32.c
+  src/f16-f32acc-rdsum/gen/f16-f32acc-rdsum-7p7x-minmax-neonfp16arith-u64.c
   src/f16-f32acc-rsum/gen/f16-f32acc-rsum-neonfp16arith-u8.c
   src/f16-f32acc-rsum/gen/f16-f32acc-rsum-neonfp16arith-u16-acc2.c
   src/f16-f32acc-rsum/gen/f16-f32acc-rsum-neonfp16arith-u24-acc3.c
@@ -153,17 +158,9 @@ SET(NON_PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-gemm/gen/f16-gemm-4x16-minmax-neonfp16arith-ld64.c
   src/f16-gemm/gen/f16-gemm-8x8-minmax-neonfp16arith-ld64.c
   src/f16-gemm/gen/f16-gemm-8x16-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-1x8-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-1x16-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-4x8-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-4x16-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-6x8-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-6x16-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-8x8-minmax-neonfp16arith-ld64.c
-  src/f16-gemm/gen/f16-gemminc-8x16-minmax-neonfp16arith-ld64.c
   src/f16-ibilinear-chw/gen/f16-ibilinear-chw-neonfp16arith-p4.c
   src/f16-ibilinear-chw/gen/f16-ibilinear-chw-neonfp16arith-p16.c
-  src/f16-ibilinear/gen/f16-ibilinear-neonfp16arith-c16.c
+  src/f16-ibilinear/gen/f16-ibilinear-neonfp16arith-u16.c
   src/f16-igemm/gen/f16-igemm-4x8-minmax-neonfp16arith-ld64.c
   src/f16-igemm/gen/f16-igemm-4x16-minmax-neonfp16arith-ld64.c
   src/f16-igemm/gen/f16-igemm-8x8-minmax-neonfp16arith-ld64.c
@@ -197,43 +194,28 @@ SET(NON_PROD_NEONFP16ARITH_MICROKERNEL_SRCS
   src/f16-rminmax/gen/f16-rmax-neonfp16arith-u24-acc3.c
   src/f16-rminmax/gen/f16-rmax-neonfp16arith-u32-acc2.c
   src/f16-rminmax/gen/f16-rmin-neonfp16arith-u8.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u16-acc1.c
   src/f16-rminmax/gen/f16-rmin-neonfp16arith-u16-acc2.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u24-acc2.c
   src/f16-rminmax/gen/f16-rmin-neonfp16arith-u24-acc3.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u24.c
   src/f16-rminmax/gen/f16-rmin-neonfp16arith-u32-acc2.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u32-acc4.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u32.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u64-acc2.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u64-acc4.c
-  src/f16-rminmax/gen/f16-rmin-neonfp16arith-u64.c
   src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u8.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u16-acc1.c
   src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u16-acc2.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u24-acc2.c
   src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u24-acc3.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u24.c
   src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u32-acc2.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u32.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u64-acc2.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u64-acc4.c
-  src/f16-rminmax/gen/f16-rminmax-neonfp16arith-u64.c
   src/f16-rsum/gen/f16-rsum-neonfp16arith-u8.c
   src/f16-rsum/gen/f16-rsum-neonfp16arith-u16-acc2.c
   src/f16-rsum/gen/f16-rsum-neonfp16arith-u24-acc3.c
   src/f16-rsum/gen/f16-rsum-neonfp16arith-u32-acc2.c
   src/f16-rsum/gen/f16-rsum-neonfp16arith-u32-acc4.c
   src/f16-spmm/gen/f16-spmm-8x1-minmax-neonfp16arith-pipelined.c
-  src/f16-spmm/gen/f16-spmm-8x1-minmax-neonfp16arith-x2.c
+  src/f16-spmm/gen/f16-spmm-8x1-minmax-neonfp16arith-u2.c
   src/f16-spmm/gen/f16-spmm-8x1-minmax-neonfp16arith.c
   src/f16-spmm/gen/f16-spmm-16x1-minmax-neonfp16arith-pipelined.c
-  src/f16-spmm/gen/f16-spmm-16x1-minmax-neonfp16arith-x2.c
+  src/f16-spmm/gen/f16-spmm-16x1-minmax-neonfp16arith-u2.c
   src/f16-spmm/gen/f16-spmm-16x1-minmax-neonfp16arith.c
   src/f16-spmm/gen/f16-spmm-24x1-minmax-neonfp16arith-pipelined.c
-  src/f16-spmm/gen/f16-spmm-24x1-minmax-neonfp16arith-x2.c
+  src/f16-spmm/gen/f16-spmm-24x1-minmax-neonfp16arith-u2.c
   src/f16-spmm/gen/f16-spmm-24x1-minmax-neonfp16arith.c
-  src/f16-spmm/gen/f16-spmm-32x1-minmax-neonfp16arith-x2.c
+  src/f16-spmm/gen/f16-spmm-32x1-minmax-neonfp16arith-u2.c
   src/f16-spmm/gen/f16-spmm-32x1-minmax-neonfp16arith.c
   src/f16-vbinary/gen/f16-vadd-neonfp16arith-u8.c
   src/f16-vbinary/gen/f16-vaddc-neonfp16arith-u8.c

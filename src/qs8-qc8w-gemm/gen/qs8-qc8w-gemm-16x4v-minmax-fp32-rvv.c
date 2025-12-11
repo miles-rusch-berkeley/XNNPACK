@@ -84,7 +84,6 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     __asm__ volatile("vle32.v v24, (%0)" : : "r"((const float*) w));
     w = (const float*) w + nr;
     
-    int8_t* cm = c0;
     for (size_t r=0; r+1<=mr; r+=2) {
       //v0 <- vopacc
       __asm__ volatile("vsetvli zero, %0, e32, m8, ta, ma" : : "r"(vl));
@@ -108,13 +107,16 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
       __asm__ volatile("vadd.vx	v8,v8,%0" : : "r"((int16_t) output_zero_point));
 
       __asm__ volatile("vsetvli zero, %0, e8, m2, ta, ma" : : "r"(vl));
-      __asm__ volatile("vncvt.x.x.w	v0,v0");
-      __asm__ volatile("vncvt.x.x.w	v8,v8");
-      __asm__ volatile("vse8.v	v0, (%0)" : : "r"(cm));
-      __asm__ volatile("vse8.v	v8, (%0)" : : "r"(cm+cm_stride));
-      cm = (int8_t*) ((uintptr_t) cm + 2*cm_stride);
+      __asm__ volatile("vncvt.x.x.w	v16,v0");
+      __asm__ volatile("vncvt.x.x.w	v18,v8");
+
+      __asm__ volatile("vssseg2e8.v	v16, (%0), %1" : : "r"(c0), "r"(mr));
+      c0 = (int8_t*) ((uintptr_t) c0 + 2);
+
+      // __asm__ volatile("vsse8.v	v16, (%0), %1" : : "r"(c0), "r"(mr));
+      // c0 = (int8_t*) ((uintptr_t) c0 + 1);
+      // __asm__ volatile("vsse8.v	v18, (%0), %1" : : "r"(c0), "r"(mr));
+      // c0 = (int8_t*) ((uintptr_t) c0 + 1);
     }
-    // printf("c0=%p\n", c0);
-    c0 = (int8_t*) ((uintptr_t) c0 + cn_stride);
   } while (nc != 0);
 }

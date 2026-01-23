@@ -1,3 +1,4 @@
+// clang-format off
 // Auto-generated file. Do not edit!
 //   Template: src/f16-rsum/neonfp16arith.c.in
 //   Generator: tools/xngen
@@ -7,19 +8,22 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#include <assert.h>
-
 #include <arm_neon.h>
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "xnnpack/common.h"
-#include "xnnpack/reduce.h"
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/math.h"
+#include "src/xnnpack/microparams.h"
+#include "src/xnnpack/reduce.h"
 
 
 void xnn_f16_rsum_ukernel__neonfp16arith_u8(
     size_t batch,
     const xnn_float16* input,
     xnn_float16* output,
-    const struct xnn_f16_scale_params params[restrict XNN_MIN_ELEMENTS(1)])
+    const struct xnn_f16_scale_params* restrict params)
 {
   assert(batch != 0);
   assert(batch % sizeof(uint16_t) == 0);
@@ -50,5 +54,6 @@ void xnn_f16_rsum_ukernel__neonfp16arith_u8(
     vacc = vadd_f16(vacc, vt);
   }
   vacc = vmul_f16(vacc, vscale);
+  vacc = vadd_f16(vacc, vreinterpret_f16_u16(vld1_dup_u16(o)));
   vst1_lane_u16(o, vreinterpret_u16_f16(vacc), 0);
 }

@@ -9,18 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xnnpack.h"
-#include "xnnpack/allocator.h"
-#include "xnnpack/common.h"
-#include "xnnpack/compute.h"
-#include "xnnpack/config-types.h"
-#include "xnnpack/config.h"
-#include "xnnpack/log.h"
-#include "xnnpack/operator-type.h"
-#include "xnnpack/operator-utils.h"
-#include "xnnpack/operator.h"
-#include "xnnpack/params.h"
-#include "pthreadpool.h"
+#include "include/xnnpack.h"
+#include "src/xnnpack/allocator.h"
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/compute.h"
+#include "src/xnnpack/config-types.h"
+#include "src/xnnpack/config.h"
+#include "src/xnnpack/log.h"
+#include "src/xnnpack/operator-type.h"
+#include "src/xnnpack/operator-utils.h"
+#include "src/xnnpack/operator.h"
+#include "src/xnnpack/params.h"
+#include <pthreadpool.h>
 
 static enum xnn_status create_rope_nthc(
     uint32_t flags,
@@ -48,6 +48,14 @@ static enum xnn_status create_rope_nthc(
       sizeof(struct xnn_operator), xnn_operator_type_to_string(operator_type));
     goto error;
   }
+  rope_op->compute = xnn_allocate_zero_memory(sizeof(struct compute_parameters));
+  if (rope_op->compute == NULL) {
+    xnn_log_error("failed to allocate %zu bytes for %s operator descriptor",
+                  sizeof(struct compute_parameters),
+                  xnn_operator_type_to_string(operator_type));
+    goto error;
+  }
+  rope_op->num_compute_invocations = 1;
 
   rope_op->type = operator_type;
   rope_op->flags = flags;

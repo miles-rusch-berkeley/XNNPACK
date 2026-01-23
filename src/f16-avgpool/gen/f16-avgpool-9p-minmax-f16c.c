@@ -1,3 +1,4 @@
+// clang-format off
 // Auto-generated file. Do not edit!
 //   Template: src/f16-avgpool/f16c.c.in
 //   Generator: tools/xngen
@@ -8,14 +9,16 @@
 // LICENSE file in the root directory of this source tree.
 
 #include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include <immintrin.h>
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/math.h"
+#include "src/xnnpack/intrinsics-polyfill.h"
+#include "src/xnnpack/microparams.h"
 
-#include "xnnpack/common.h"
-#include "xnnpack/intrinsics-polyfill.h"
-#include "xnnpack/microparams.h"
-
-static void xnn_store_tail_f16(uint16_t* o, __m128i vh, size_t c) {
+static XNN_INLINE void xnn_store_tail_f16(uint16_t* o, __m128i vh, size_t c) {
   assert(c > 0);
   assert(c < 8);
   if (c & 4) {
@@ -33,7 +36,7 @@ static void xnn_store_tail_f16(uint16_t* o, __m128i vh, size_t c) {
   }
 }
 
-static __m128i xnn_load_tail_safe_f16(const uint16_t* i, size_t c) {
+static XNN_INLINE __m128i xnn_load_tail_safe_f16(const uint16_t* i, size_t c) {
   assert(c > 0);
   assert(c < 8);
 
@@ -57,12 +60,13 @@ void xnn_f16_avgpool_minmax_ukernel_9p__f16c_u8(
     size_t channels,
     const xnn_float16** input,
     size_t input_offset,
+    size_t input_pixel_stride,
     const xnn_float16* zero,
     const xnn_float16* multiplier,
     xnn_float16* output,
     size_t input_increment,
     size_t output_increment,
-    const struct xnn_f16_scaleminmax_params params[restrict XNN_MIN_ELEMENTS(1)]) XNN_OOB_READS
+    const struct xnn_f16_scaleminmax_params* restrict params)
 {
   assert(output_pixels != 0);
   assert(channels != 0);
@@ -298,6 +302,7 @@ void xnn_f16_avgpool_minmax_ukernel_9p__f16c_u8(
     }
 
     input = (const xnn_float16**) ((uintptr_t) input + input_increment);
+    input_offset += input_pixel_stride;
     output = (xnn_float16*) ((uintptr_t) output + output_increment);
   } while (--output_pixels != 0);
 }

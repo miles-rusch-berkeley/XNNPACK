@@ -28,18 +28,20 @@ $assert REQUANTIZATION in ["FP32", "RNDNU", "RNDNU16"] or not REQUANTIZATION
 $assert DATATYPE in ["QC8", "QD8", "QC4_F16", "QC4_F32", "QB4_F16", "QB4_F32", "QS8", "QU8"]
 $assert DATATYPE != "QC8" or REQUANTIZATION == "FP32"
 $assert not DATATYPE in ["QD8", "QC4_F16", "QC4_F32", "QB4_F16", "QB4_F32"] or not REQUANTIZATION
-#include <assert.h>
-
 #include <arm_neon.h>
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "xnnpack/common.h"
-#include "xnnpack/gemm.h"
-$if DATATYPE in ["QC4_F16", "QC4_F32", "QB4_F16", "QB4_F32"]:
-  #include "xnnpack/math.h"
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/gemm.h"
 $if REQUANTIZATION == "FP32" and ARMV8:
-  #include "xnnpack/intrinsics-polyfill.h"
+  #include "src/xnnpack/intrinsics-polyfill.h"
+$if DATATYPE in ["QC4_F16", "QC4_F32", "QB4_F16", "QB4_F32"]:
+  #include "src/xnnpack/math.h"
+#include "src/xnnpack/microparams.h"
 $if PREFETCH:
-  #include "xnnpack/prefetch.h"
+  #include "src/xnnpack/prefetch.h"
 
 
 $DATATYPE_SPEC = {"QC8": "qs8_qc8w", "QS8": "qs8", "QU8": "qu8", "QD8": "qd8_f32_qc8w", "QC4_F16": "qd8_f16_qc4w", "QC4_F32": "qd8_f32_qc4w", "QB4_F16": "qd8_f16_qb4w", "QB4_F32": "qd8_f32_qb4w"}[DATATYPE]
@@ -87,10 +89,10 @@ void xnn_${DATATYPE_SPEC}_gemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${NR}_
     size_t cm_stride,
     size_t cn_stride,
     $if DATATYPE in ["QD8", "QC4_F16", "QC4_F32", "QB4_F16", "QB4_F32"]:
-      const ${PARAMS_TYPE} params[restrict XNN_MIN_ELEMENTS(1)],
-      const struct ${SCALING_PARAMS} quantization_params[restrict XNN_MIN_ELEMENTS(1)]) XNN_OOB_READS
+      const ${PARAMS_TYPE}* restrict params,
+      const struct ${SCALING_PARAMS}* restrict quantization_params) XNN_OOB_READS
     $else:
-      const ${PARAMS_TYPE} params[restrict XNN_MIN_ELEMENTS(1)]) XNN_OOB_READS
+      const ${PARAMS_TYPE}* restrict params) XNN_OOB_READS
 {
   assert(mr != 0);
   assert(mr <= ${MR});

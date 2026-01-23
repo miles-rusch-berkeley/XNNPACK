@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <riscv_vector.h>
 
-#include "xnnpack/bme.h"
-#include "xnnpack/gemm.h"
-#include "xnnpack/math.h"
+#include "src/xnnpack/gemm.h"
+#include "src/xnnpack/math.h"
+#include "src/xnnpack/bme.h"
 
 void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     size_t mr,
@@ -26,7 +26,7 @@ void xnn_qs8_qc8w_gemm_minmax_fp32_ukernel_16x4v__rvv(
     int8_t* restrict c,     
     size_t cm_stride,
     size_t cn_stride,
-    const union xnn_qs8_qc8w_conv_minmax_params params[restrict XNN_MIN_ELEMENTS(1)])
+    const union xnn_qs8_qc8w_conv_minmax_params* restrict params)
 {
   assert(mr != 0);
   assert(nc != 0);

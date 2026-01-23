@@ -3,23 +3,23 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#ifndef __XNNPACK_TEST_PACKQ_MICROKERNEL_TESTER_H
-#define __XNNPACK_TEST_PACKQ_MICROKERNEL_TESTER_H
+#ifndef XNNPACK_TEST_PACKQ_MICROKERNEL_TESTER_H_
+#define XNNPACK_TEST_PACKQ_MICROKERNEL_TESTER_H_
 
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
 
-#include "xnnpack/math.h"
-#include "xnnpack/microfnptr.h"
-#include "xnnpack/pack.h"
-#include "xnnpack/buffer.h"
+#include "src/xnnpack/buffer.h"
+#include "src/xnnpack/math.h"
+#include "src/xnnpack/microfnptr.h"
+#include "src/xnnpack/pack.h"
 
 namespace xnnpack {
 
 class PackQMicrokernelTester {
  public:
-  PackQMicrokernelTester&m(size_t m) {
+  PackQMicrokernelTester& m(size_t m) {
     this->m_ = m;
     return *this;
   }
@@ -79,4 +79,4 @@ class PackQMicrokernelTester {
 
 };  // namespace xnnpack
 
-#endif  // __XNNPACK_TEST_PACKQ_MICROKERNEL_TESTER_H
+#endif  // XNNPACK_TEST_PACKQ_MICROKERNEL_TESTER_H_

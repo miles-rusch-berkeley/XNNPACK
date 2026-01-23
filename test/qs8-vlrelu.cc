@@ -1,3 +1,4 @@
+// clang-format off
 // Copyright 2019 Google LLC
 //
 // This source code is licensed under the BSD-style license found in the
@@ -15,19 +16,20 @@
 #include <limits>
 
 #include <gtest/gtest.h>
-#include "xnnpack.h"
-#include "xnnpack/common.h"
-#include "xnnpack/isa-checks.h"
-#include "xnnpack/microparams-init.h"
-#include "xnnpack/microparams.h"
-#include "xnnpack/vunary.h"
-#include "next_prime.h"
-#include "vunary-microkernel-tester.h"
+#include "include/xnnpack.h"
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/isa-checks.h"
+#include "src/xnnpack/microparams-init.h"
+#include "src/xnnpack/microparams.h"
+#include "src/xnnpack/vunary.h"
+#include "test/next_prime.h"
+#include "test/unary-ops.h"
+#include "test/vunary-microkernel-tester.h"
 
 using TestInfo = LeakyReLU;
 
 #define XNN_QUANTIZED(T) xnnpack::quantized<T>
-#define XNN_UKERNEL_WITH_PARAMS(arch_flags, ukernel, batch_tile, vector_tile, datatype, params_type, init_params)                    \
+#define XNN_UKERNEL(arch_flags, ukernel, batch_tile, vector_tile, datatype, params_type, init_params)                                \
   TEST(ukernel, batch_eq) { TestBatchEq<TestInfo, datatype, datatype>(arch_flags, batch_tile, ukernel, init_params); }               \
   TEST(ukernel, batch_div) { TestBatchDiv<TestInfo, datatype, datatype>(arch_flags, batch_tile, ukernel, init_params); }             \
   TEST(ukernel, batch_lt) { TestBatchLT<TestInfo, datatype, datatype>(arch_flags, batch_tile, ukernel, init_params); }               \
@@ -49,6 +51,6 @@ TEST(ukernel, input_scale) { TestInputScale<TestInfo, datatype, datatype>(arch_f
 TEST(ukernel, output_scale) { TestOutputScale<TestInfo, datatype, datatype>(arch_flags, batch_tile, ukernel, init_params); }         \
 TEST(ukernel, input_zero_point) { TestInputZeroPoint<TestInfo, datatype, datatype>(arch_flags, batch_tile, ukernel, init_params); }  \
 TEST(ukernel, output_zero_point) { TestOutputZeroPoint<TestInfo, datatype, datatype>(arch_flags, batch_tile, ukernel, init_params); }
-#include "qs8-vlrelu/qs8-vlrelu.h"
-#undef XNN_UKERNEL_WITH_PARAMS
+#include "src/qs8-vlrelu/qs8-vlrelu.inc"
+#undef XNN_UKERNEL
 #undef XNN_QUANTIZED

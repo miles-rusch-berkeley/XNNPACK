@@ -9,11 +9,16 @@ $assert DATATYPE in ["QD8"] or REQUANTIZATION in ["FP32", "RNDNU"]
 #include <assert.h>
 $if VARIANT == "LRINTF":
   #include <math.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "xnnpack/math.h"
-#include "xnnpack/gemm.h"
+#include "src/xnnpack/common.h"
+#include "src/xnnpack/igemm.h"
+#include "src/xnnpack/math.h"
+#include "src/xnnpack/microparams.h"
+
 $if NR % 4 != 0:
-  #include "xnnpack/unaligned.h"
+  #include "src/xnnpack/unaligned.h"
 
 
 $DATATYPE_SPEC = {"QC8": "qs8_qc8w", "QS8": "qs8", "QU8": "qu8", "QD8": "qd8_f32_qc8w"}[DATATYPE]
@@ -40,10 +45,10 @@ void xnn_${DATATYPE_SPEC}_igemm_minmax${REQUANTIZATION_SPEC}_ukernel_${MR}x${NR}
     $if DATATYPE in ["QD8"]:
       const int8_t* zero_data,
     $if DATATYPE in ["QD8", "QC4"]:
-      const ${PARAMS_TYPE} params[restrict XNN_MIN_ELEMENTS(1)],
-      const struct ${SCALING_PARAMS} quantization_params[restrict XNN_MIN_ELEMENTS(1)])
+      const ${PARAMS_TYPE}* restrict params,
+      const struct ${SCALING_PARAMS}* restrict quantization_params)
     $else:
-      const ${PARAMS_TYPE} params[restrict XNN_MIN_ELEMENTS(1)])
+      const ${PARAMS_TYPE}* restrict params)
 {
   assert(mr != 0);
   assert(mr <= ${MR});
